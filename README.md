@@ -55,3 +55,30 @@ X_train, X_test, y_train, y_test = train_test_split(
 - `map()` simplifies target encoding.
 
 This setup ensures a strong foundation for modeling and evaluation.
+
+## Evaluation Metrics
+The dataset has an **11.26% positive class rate**, highlighting the importance of using multiple metrics beyond accuracy to evaluate model performance effectively.
+
+### 1. **Accuracy**  
+- **Definition:** The ratio of correctly predicted outcomes to total predictions.
+- **Strength:** Simple and easy to interpret.
+- **Limitation:** Misleading on imbalanced datasets.
+
+### 2. **Recall (Sensitivity)**  
+- **Definition:** The proportion of actual positives correctly identified.
+- **Strength:** Essential for minimizing false negatives (e.g., identifying potential subscribers).
+- **Limitation:** Only evaluates one performance aspect.
+
+### 3. **Precision**  
+- **Definition:** The proportion of predicted positives that are truly positive.
+- **Strength:** Useful for minimizing false positives, ensuring correct customer targeting.
+- **Limitation:** Focuses solely on one performance dimension.
+
+### 4. **F1 Score**  
+- **Definition:** The harmonic mean of precision and recall.
+- **Strength:** Balances false positives and false negatives, suitable for imbalanced datasets.
+- **Limitation:** Provides a single score, masking individual performance aspects.
+
+
+
+
