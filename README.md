@@ -7,17 +7,18 @@ The aim is to understand what drives successful telemarketing efforts and identi
 - **Model Type:** Classification model
 - **Predictive Target:** Signed up for a term deposit (1) or not (0)
 
+## Data Source
 
-## Data Source  
 This project uses the **UCI Machine Learning Repository: Bank Marketing Data Set (2012)**. You can access it here:  
-[UCI Bank Marketing Dataset](http://archive.ics.uci.edu/ml/datasets/Bank+Marketing) *(Accessed: August 26, 2022)*.
+[UCI Bank Marketing Dataset](http://archive.ics.uci.edu/ml/datasets/Bank+Marketing) _(Accessed: August 26, 2022)_.
 
 **Original Source:**  
-Moro, S., Cortez, P., & Rita, P. (2014). *A Data-Driven Approach to Predict the Success of Bank Telemarketing*. Decision Support Systems, Elsevier, 62, 22-31. doi:10.1016/j.dss.2014.06.001
+Moro, S., Cortez, P., & Rita, P. (2014). _A Data-Driven Approach to Predict the Success of Bank Telemarketing_. Decision Support Systems, Elsevier, 62, 22-31. doi:10.1016/j.dss.2014.06.001
 
 ---
 
 ## Training and Testing Data
+
 - **Total Records:** 41,188 (20 attributes)
 - **Training Set:** 80% (32,950 records)
 - **Testing Set:** 20% (8,238 records)
@@ -27,6 +28,7 @@ Moro, S., Cortez, P., & Rita, P. (2014). *A Data-Driven Approach to Predict the 
 ---
 
 ## Data Preparation and Splitting (Python)
+
 ```python
 # Import libraries
 from sklearn.model_selection import train_test_split
@@ -56,7 +58,9 @@ X_train, X_test, y_train, y_test = train_test_split(
 ```
 
 ---
+
 **Key Points:**
+
 - **Stratification** maintains class balance.
 - `random_state=7` ensures reproducibility.
 - `map()` simplifies target encoding.
@@ -64,40 +68,46 @@ X_train, X_test, y_train, y_test = train_test_split(
 This setup ensures a strong foundation for modeling and evaluation.
 
 ## Evaluation Metrics
+
 The dataset has an **11.26% positive class rate**, highlighting the importance of using multiple metrics beyond accuracy to evaluate model performance effectively.
 
-### 1. **Accuracy**  
+### 1. **Accuracy**
+
 - **Definition:** The ratio of correctly predicted outcomes to total predictions.
 - **Strength:** Simple and easy to interpret.
 - **Limitation:** Misleading on imbalanced datasets.
 
-### 2. **Recall (Sensitivity)**  
+### 2. **Recall (Sensitivity)**
+
 - **Definition:** The proportion of actual positives correctly identified.
 - **Strength:** Essential for minimizing false negatives (e.g., identifying potential subscribers).
 - **Limitation:** Only evaluates one performance aspect.
 
-### 3. **Precision**  
+### 3. **Precision**
+
 - **Definition:** The proportion of predicted positives that are truly positive.
 - **Strength:** Useful for minimizing false positives, ensuring correct customer targeting.
 - **Limitation:** Focuses solely on one performance dimension.
 
-### 4. **F1 Score**  
+### 4. **F1 Score**
+
 - **Definition:** The harmonic mean of precision and recall.
 - **Strength:** Balances false positives and false negatives, suitable for imbalanced datasets.
 - **Limitation:** Provides a single score, masking individual performance aspects.
-
 
 ## Model 2: Gradient Boosting Machine (GBM)
 
 Gradient boosting is an approach where new decision trees are created that predict the residuals or errors of prior models and then combined to the final model. It is called gradient boosting because the models are fitted using any arbitrary differentiable loss function and uses a gradient descent algorithm to minimize the loss when adding new models.
 
-###  Justification of model choice
+### Justification of model choice
+
 - GBM can work for classification problems, in our context it can be used to predict if a client will subscribe to term deposit or not.
 - GBM can handle linear and non-linear relationship
 - Our dataset has a mix of numerical and categorical variables, XGBM can work well with both data types (after one hot encoded the categorical variable).
 - It doesn’t require much assumption about the dataset and/or pre-processing
 
 ### Pre-processing performed
+
 GBM doesn’t natively support categorical variables, one-hot encoding is performed for categorical variables, with code shown below.
 
 ```python
@@ -130,6 +140,7 @@ from sklearn.metrics import precision_score, recall_score
 ```
 
 ### Hyperparameter Tuning
+
 This is critical for GBM to prevent over-fitting. Given the size of the dataset, the computational cost to grid search on all parameters is large and time consuming. To overcome this, we have only performed grid search on key parameters, used fix parameters for other parameters and also used only 3-fold cross validation.
 
 Below is a list of parameters used with justification on parameter choice:
@@ -162,6 +173,7 @@ Figure below shows the result of grid search. Evident by the chart, ‘max_depth
 ![](/GradientBoostingImage.png)
 
 ### Final Model
+
 After selecting the parameter, a final model is fitted on all training dataset and results are assessed using the independent testing data.
 
 The top 10 important feature with its importance score produced by the final model is shown in figure below:
@@ -185,16 +197,16 @@ plt.barh(importance_feature_top.name,importance_feature_top.importance_score)
 ```
 
 ### Model Evaluation
+
 Our business problem is to term deposit subscription, as such we will focus on positive class for performance evaluation. Performance results are summarised in the table below, note that Recall, Precision and F1 in the table is based on 50% probability threshold for positive class.
 
-
-| **Metric**   | **Training** | **Testing** |
-|--------------|-------------|------------|
-| **Accuracy** | 92.74%     | 91.78%    |
-| **Recall**   | 0.583      | 0.519     |
-| **Precision**| 0.719      | 0.676     |
-| **F1 Score** | 0.644      | 0.587     |
-| **AUROC**    | 0.956      | 0.948     |
+| **Metric**    | **Training** | **Testing** |
+| ------------- | ------------ | ----------- |
+| **Accuracy**  | 92.74%       | 91.78%      |
+| **Recall**    | 0.583        | 0.519       |
+| **Precision** | 0.719        | 0.676       |
+| **F1 Score**  | 0.644        | 0.587       |
+| **AUROC**     | 0.956        | 0.948       |
 
 - There is no significant drop in performance between training and testing data indicating the model is not overfitted. This is also demonstrated in the hyper parameter tuning process where the parameter is chosen to prevent over-fitting.
 - We can see the model has high accuracy of 92% this is higher than accuracy can be achieved if predict everything to negative. This means the model has successfully identified a good amount of correct positive and negative classes.
@@ -205,30 +217,30 @@ Our business problem is to term deposit subscription, as such we will focus on p
 
 A more detailed classification report and confusion matrix is shown in the figure below:
 
-
-
 ## Model 3: AdaBoostClassifier
+
 AdaBoostClassifier (Adaptive Boosting Classifier) is an ensemble learning algorithm that combines multiple weak classifiers to form a strong predictive model. It works by iteratively training weak learners, adjusting their weights to focus on misclassified instances, and combining their predictions to improve overall accuracy. Unlike traditional models that treat all samples equally, AdaBoostClassifier assigns higher importance to difficult-to-classify examples, allowing it to refine decision boundaries over multiple iterations. By leveraging weak learners such as decision stumps (single-level decision trees), AdaBoostClassifier enhances classification performance while maintaining computational efficiency.
 
 ### Justification of Model Choice
-- <b>AdaBoostClassifier is effective for classification problems </b>, making it suitable for predicting whether a customer will subscribe to a financial product.
-- <b>It enhances weak learners </b> by iteratively refining their predictions, reducing bias and improving overall performance.
+
+- <b>AdaBoostClassifier is effective for classification problems</b>, making it suitable for predicting whether a customer will subscribe to a financial product.
+- <b>It enhances weak learners</b> by iteratively refining their predictions, reducing bias and improving overall performance.
 - <b>The model can handle both linear and non-linear relationships</b>, allowing it to capture complex patterns in the dataset.
 - <b>AdaBoostClassifier performs well with structured tabular data</b>, making it ideal for datasets with a mix of numerical and categorical variables (after one-hot encoding).
-- <b>It does not require extensive parameter tuning </b> or strong assumptions about the data, making it a practical and interpretable choice for customer subscription prediction.
+- <b>It does not require extensive parameter tuning</b> or strong assumptions about the data, making it a practical and interpretable choice for customer subscription prediction.
 
-### Libraries Used 
+### Libraries Used
 
-The implementation of **AdaBoostClassifier** relies on several Python libraries for **data handling, preprocessing, model training, evaluation, and visualisation**. Below is an overview of the libraries used in this study:  
+The implementation of **AdaBoostClassifier** relies on several Python libraries for **data handling, preprocessing, model training, evaluation, and visualisation**. Below is an overview of the libraries used in this study:
 
-- **pandas**: Used for loading, cleaning, and transforming the dataset into a structured format suitable for machine learning.  
-- **numpy**: Provides support for numerical computations and array operations, ensuring efficient data processing.  
-- **seaborn**: Used for advanced data visualisation, particularly for analysing feature distributions and plotting confusion matrices.  
-- **matplotlib.pyplot**: Used for generating various plots, including feature importance graphs, ROC curves, and confusion matrices.  
-- **sklearn.model_selection**: Provides **train_test_split** for splitting the dataset into training and testing sets, and **RandomizedSearchCV** for hyperparameter tuning.  
-- **sklearn.preprocessing**: Includes **StandardScaler**, which is used to standardise numerical features, ensuring uniform feature scaling.  
-- **sklearn.ensemble**: Contains **AdaBoostClassifier**, the core model used for classification in this study.  
-- **sklearn.metrics**: Provides multiple evaluation metrics, including **accuracy_score, precision_score, recall_score, f1_score, roc_auc_score**, as well as functions for generating **classification reports, confusion matrices, and ROC curves**.  
+- **pandas**: Used for loading, cleaning, and transforming the dataset into a structured format suitable for machine learning.
+- **numpy**: Provides support for numerical computations and array operations, ensuring efficient data processing.
+- **seaborn**: Used for advanced data visualisation, particularly for analysing feature distributions and plotting confusion matrices.
+- **matplotlib.pyplot**: Used for generating various plots, including feature importance graphs, ROC curves, and confusion matrices.
+- **sklearn.model_selection**: Provides **train_test_split** for splitting the dataset into training and testing sets, and **RandomizedSearchCV** for hyperparameter tuning.
+- **sklearn.preprocessing**: Includes **StandardScaler**, which is used to standardise numerical features, ensuring uniform feature scaling.
+- **sklearn.ensemble**: Contains **AdaBoostClassifier**, the core model used for classification in this study.
+- **sklearn.metrics**: Provides multiple evaluation metrics, including **accuracy_score, precision_score, recall_score, f1_score, roc_auc_score**, as well as functions for generating **classification reports, confusion matrices, and ROC curves**.
 
 These libraries collectively enable the efficient development, tuning, and evaluation of the **AdaBoostClassifier** while ensuring that the model is both interpretable and well-optimised.
 
@@ -244,6 +256,7 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 ```
 
 ### Data Pre-Processing
+
 The dataset used in this study has already undergone extensive preprocessing, as outlined in the group section. This includes <b> removing duplicate records, handling missing or unknown values, encoding categorical variables through one-hot encoding </b>, and <b> splitting the dataset into training and testing sets</b> using stratified sampling to maintain class distribution. These steps ensure that the data is well-structured and suitable for classification.
 
 For this specific implementation of <b>AdaBoostClassifier</b>, an additional preprocessing step is applied — <b>Feature Scaling</b>. Since AdaBoost is sensitive to feature magnitudes, standardisation is performed using <b>StandardScaler</b>, transforming numerical features to have <b>zero mean and unit variance</b>. This prevents attributes with larger scales from disproportionately influencing the learning process. The transformation is applied as follows:
@@ -257,11 +270,13 @@ X_test = scaler.transform(X_test)
 Applying standardisation ensures that numerical attributes such as <b>age, balance, and duration</b> remain on a consistent scale, contributing to improved model stability and performance. With these preprocessing steps in place, the dataset is fully prepared for training the <b>AdaBoostClassifier</b>, enabling an effective and unbiased evaluation of its predictive capabilities.
 
 ### Baseline Model Training and Evaluation
+
 To establish a benchmark for comparison, an initial AdaBoostClassifier model is trained using default hyperparameters, serving as a baseline for further refinement. The dataset is divided into training and test sets using stratified sampling to maintain the target variable's distribution. The model is trained with 50 estimators (default setting) and a learning rate of 1.0, ensuring that the model can effectively learn from the data while maintaining computational efficiency.
 
 The classification report for the baseline model highlights that while precision for the majority class is high, recall for the minority class (subscribed customers) is comparatively lower, suggesting that the model struggles to capture all positive cases. The confusion matrix further illustrates this issue, as it shows a substantial number of false negatives. Despite this, the ROC-AUC score of 0.9358 suggests that the model has strong overall predictive capability, meaning it can distinguish between subscribed and non-subscribed customers well.
 
 #### Step 1: Define Model Evaluation Function
+
 Before training, a function is created to evaluate models by computing classification metrics, plotting a confusion matrix, and generating a ROC curve:
 
 ```python
@@ -269,7 +284,7 @@ Before training, a function is created to evaluate models by computing classific
 def evaluate_model(model, X_test, y_test, label):
     y_pred = model.predict(X_test)
     y_prob = model.predict_proba(X_test)[:, 1]
-    
+
     print(f"\nPerformance for {label}:")
     print(f"Accuracy: {accuracy_score(y_test, y_pred):.4f}")
     print(f"Precision: {precision_score(y_test, y_pred):.4f}")
@@ -286,7 +301,7 @@ def evaluate_model(model, X_test, y_test, label):
     plt.ylabel("Actual")
     plt.title(f"Confusion Matrix - {label}")
     plt.show()
-    
+
     # ROC Curve
     fpr, tpr, _ = roc_curve(y_test, y_prob)
     plt.figure(figsize=(6, 4))
@@ -302,6 +317,7 @@ def evaluate_model(model, X_test, y_test, label):
 #### Step 2: Train the Baseline Model
 
 The baseline model was implemented as follows:
+
 ```python
 # Train baseline model
 baseline_model = AdaBoostClassifier(n_estimators = 50, random_state=42)
@@ -323,7 +339,6 @@ The following evaluation metrics summarise the model’s performance:
 
 ![](images/adaboostclassifier/baseline_model_performance.png)
 
-
 <b> Confusion Matrix - Baseline Model</b>
 
 The confusion matrix visualises the number of correct and incorrect predictions:
@@ -335,7 +350,6 @@ The confusion matrix visualises the number of correct and incorrect predictions:
 
 ![](images/adaboostclassifier/confusion_matrix_baseline.png)
 
-
 <b>ROC Curve - Baseline Model</b>
 
 The ROC curve demonstrates the model’s ability to distinguish between subscribed and non-subscribed customers. The <b>AUC score of 0.9358</b> indicates strong classification performance.
@@ -343,8 +357,156 @@ The ROC curve demonstrates the model’s ability to distinguish between subscrib
 ![](images/adaboostclassifier/roc_curve_baseline.png)
 
 ### Baseline Model Observation
+
 - The <b>high precision (92%) for the majority class</b> suggests that the model correctly predicts non-subscribed customers with high accuracy.
 - However, the <b>recall for subscribed customers is low (39%)</b>, indicating that the model fails to identify a significant proportion of actual subscribers.
 - The <b>high ROC-AUC score (0.9358)</b> suggests that despite the recall issue, the model effectively distinguishes between the two classes.
 
 This baseline model serves as a <b>reference point</b> for further improvements through <b>hyperparameter tuning</b>, which aims to increase recall and F1-score while maintaining strong overall classification performance.
+
+### Hyperparameter Tuning
+
+To improve the predictive performance of the AdaBoostClassifier, hyperparameter tuning is conducted using RandomizedSearchCV. The goal is to optimise the number of estimators and the learning rate, enhancing the model’s ability to identify subscribed customers while minimising false negatives.
+
+#### Step 4: Perform Hyperparameter Tuning
+
+To efficiently search for the best hyperparameters, a range of values is defined for n_estimators and learning_rate. The tuning process explores the following values:
+
+- `n_estimators = [50, 100, 200, 300, 400, 500]`
+- `learning_rate = [0.001, 0.01, 0.1, 0.5, 1.0]`
+
+Using RandomizedSearchCV, the algorithm selects a subset of hyperparameter combinations to reduce computation time while ensuring model optimisation.
+
+```python
+# Hyperparameter Tuning with RandomizedSearchCV for efficiency
+param_dist = {
+    'n_estimators': [50, 100, 200, 300, 400, 500],
+    'learning_rate': [0.001, 0.01, 0.1, 0.5, 1.0],
+}
+
+random_search = RandomizedSearchCV(AdaBoostClassifier(random_state=42), param_distributions=param_dist, cv=5, scoring='f1', n_jobs=-1, n_iter=10, random_state=42)
+random_search.fit(X_train, y_train)
+print(f"Best Parameters: {random_search.best_params_}")
+```
+
+After running the tuning process, the <b>best combination of hyperparameters is selected</b> and stored in `random_search.best_params_`, which will be used to train the final model.
+
+
+### Hyperparameter Tuning
+After optimising the AdaBoostClassifier, the final model is trained using the best hyperparameters identified through RandomizedSearchCV. This refined model is expected to improve recall and F1-score, leading to better identification of subscribed customers.
+
+#### Step 5: Train the Final Model
+The best parameters found from the tuning process are now used to train the final AdaBoostClassifier, ensuring an optimal balance between precision and recall.
+
+```python
+# Fit final model with best parameters
+final_model = random_search.best_estimator_
+final_model.fit(X_train, y_train)
+```
+By retraining the model with optimised parameters, we expect to see improvements in its ability to classify positive cases more effectively.
+
+#### Step 6: Evaluate the Final Model
+After training the final model, it is evaluated using the same function applied to the baseline model. The classification report, confusion matrix, and ROC curve are generated to assess improvements in performance.
+
+```python
+# Evaluate final models
+evaluate_model(final_model, X_test, y_test, "Final Model (After Tuning)")
+```
+
+<b>Final Model Observation</b>
+
+The following evaluation metrics summarise the model’s performance after hyperparameter tuning:
+
+![](images/adaboostclassifier/final_model_performance.png)
+
+
+<b>Confusion Matrix - Final Model</b>
+
+The confusion matrix visualises the number of correct and incorrect predictions:
+
+- <b>True Negatives (TN): 5159</b> (Correctly predicted non-subscribed customers)
+- <b>False Positives (FP): 165</b> (Incorrectly predicted non-subscribers as subscribers)
+- <b>False Negatives (FN): 457</b> (Incorrectly predicted subscribers as non-subscribers)
+- <b>True Positives (TP): 315</b> (Correctly predicted subscribed customers)
+
+![](images/adaboostclassifier/confusion_matrix_final.png)
+
+
+<b> ROC Curve - Final Model</b>
+
+The ROC curve demonstrates the model’s ability to distinguish between subscribed and non-subscribed customers. The AUC score of 0.9378 indicates strong classification performance, slightly improving over the baseline model.
+
+![](images/adaboostclassifier/roc_curve_final.png)
+
+### Final Model Observations
+
+- <b>Recall has improved slightly</b>, increasing from <b>39.38% (baseline model)</b> to <b>40.80% (final model)</b>. This means the model identifies a <b>higher number of actual subscribers.</b>
+- <b>F1-score has increased</b>, indicating that the final model <b>better balances precision and recall.</b>
+- <b>The ROC-AUC score increased slightly</b>, reinforcing the model’s effectiveness at distinguishing between subscribed and non-subscribed customers.
+- <b>Precision has slightly decreased</b>, suggesting that the model is slightly more prone to false positives in order to improve recall.
+
+Overall, <b>hyperparameter tuning has successfully optimised the AdaBoostClassifier</b>, improving its ability to correctly identify customers who are likely to subscribe, while maintaining strong classification accuracy.
+
+## Feature Importance Analysis
+
+To understand which factors contribute the most to customer subscription decisions, a feature importance analysis is conducted. The AdaBoostClassifier assigns different weights to features based on their impact on improving classification accuracy. This analysis provides valuable insights into which attributes play a key role in predicting customer subscriptions, allowing for targeted marketing and customer engagement strategies.
+
+The following code extracts and plots the feature importances assigned by the final AdaBoostClassifier:
+
+```python
+# Feature Importance Analysis
+feature_importances = pd.Series(final_model.feature_importances_, index=X.columns)
+feature_importances.sort_values(ascending=False).plot(kind="bar", figsize=(12,6), title="Feature Importance in Final Model")
+plt.show()
+```
+
+The feature importance plot highlights the most influential factors in predicting customer subscription outcomes.
+
+![](images/adaboostclassifier/feature_importance.png)
+
+1. <b>Duration of the Call</b> is the most critical predictor, indicating that <b>the length of the customer’s last phone call significantly impacts the likelihood of subscription.</b>
+2. <b>Economic indicators</b>, such as <b>euribor3m (Euro interbank interest rate), employment variation rate, and consumer confidence index</b>, are also influential, showing that <b>macroeconomic conditions affect customer decisions.</b>
+3. <b>Customer demographics</b>, such as <b>age and previous campaign interactions</b>, play a notable role in subscription likelihood.
+4. <b>One-hot encoded categorical variables</b> such as <b>job type, education, and marital status</b> contribute less but still have an impact.
+
+
+## Model Evaluation
+### **Model Evaluation**  
+
+The **final model** is compared to the **baseline model** to evaluate the impact of hyperparameter tuning on classification accuracy and predictive performance. While overall accuracy remains nearly the same, hyperparameter tuning has led to improvements in recall and F1-score.  
+
+#### **Key Observations:**  
+- **Recall improved from 39.38% to 40.80%**, meaning the **final model correctly identifies more subscribed customers (True Positives)** compared to the baseline model.  
+- **F1-score increased from 49.75% to 50.32%**, indicating a better balance between **precision and recall**, leading to a more effective classification model.  
+- **Precision slightly decreased from 67.56% to 65.62%**, which suggests a small increase in **false positives** as the model prioritises recall over precision.  
+- **The ROC-AUC score increased from 93.58% to 93.78%**, reinforcing the **model’s ability to differentiate between customers who will and will not subscribe**.  
+- The **confusion matrix shows a reduction in false negatives**, suggesting that the final model has **improved its ability to capture actual subscribers** while maintaining a high number of correctly predicted non-subscribers.  
+- The **final model demonstrates a slight trade-off**, sacrificing some precision to achieve higher recall, which is beneficial in cases where identifying potential subscribers is more important than minimising false positives.  
+
+Overall, **hyperparameter tuning has successfully optimised the AdaBoostClassifier**, making it a **more effective model for predicting customer subscriptions** by improving its ability to capture potential subscribers while maintaining high classification performance.
+
+## Model Evaluation: Baseline Model vs Final Model
+
+To assess the impact of hyperparameter tuning, the baseline AdaBoostClassifier model is compared to the final optimised model. This evaluation focuses on key classification metrics, including accuracy, precision, recall, F1-score, and ROC-AUC, to determine whether the optimised model has improved over the initial version.
+
+The table below summarises the key performance metrics for both models:
+
+| **Metric**    | **Baseline Model** | **Final Model** |
+| ------------- | ------------ | ----------- |
+| **Accuracy**  | 89.93%       | 89.80%      |
+| **Recall**    | 67.76%       | 65.62%      |
+| **Precision** | 39.38%       | 40.80%      |
+| **F1 Score**  | 49.75%       | 50.32%      |
+| **AUROC**     | 93.58%       | 93.78%      |
+
+These results indicate that hyperparameter tuning led to a slight increase in recall and F1-score, making the final model better at capturing actual subscribers. However, this comes at the cost of a slight decrease in precision, meaning the model produces more false positives.
+
+- Recall improved from 39.38% to 40.80%, meaning the final model correctly identifies more subscribed customers (True Positives) compared to the baseline model.
+- F1-score increased from 49.75% to 50.32%, indicating a better balance between precision and recall, leading to a more effective classification model.
+- Precision slightly decreased from 67.56% to 65.62%, which suggests a small increase in false positives as the model prioritises recall over precision.
+- The ROC-AUC score increased from 93.58% to 93.78%, reinforcing the model’s ability to differentiate between customers who will and will not subscribe.
+- The confusion matrix shows a reduction in false negatives, suggesting that the final model has improved its ability to capture actual subscribers while maintaining a high number of correctly predicted non-subscribers.
+- The final model demonstrates a slight trade-off, sacrificing some precision to achieve higher recall, which is beneficial in cases where identifying potential subscribers is more important than minimising false positives.
+- For the ROC Curve Model, the increase in AUC from 0.9358 to 0.9378 suggests a slight improvement in the model’s ability to distinguish between subscribed and non-subscribed customers.
+
+Hyperparameter tuning has successfully improved the model’s ability to detect actual subscribers by increasing recall and F1-score while maintaining a high ROC-AUC score. While precision has slightly decreased, the trade-off allows the model to correctly identify more customers who are likely to subscribe. This suggests that the final model is a more effective predictive tool for customer subscription classification, especially in scenarios where capturing all potential subscribers is a higher priority than minimising false positives.
