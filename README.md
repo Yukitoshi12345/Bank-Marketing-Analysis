@@ -255,3 +255,96 @@ X_test = scaler.transform(X_test)
 ```
 
 Applying standardisation ensures that numerical attributes such as <b>age, balance, and duration</b> remain on a consistent scale, contributing to improved model stability and performance. With these preprocessing steps in place, the dataset is fully prepared for training the <b>AdaBoostClassifier</b>, enabling an effective and unbiased evaluation of its predictive capabilities.
+
+### Baseline Model Training and Evaluation
+To establish a benchmark for comparison, an initial AdaBoostClassifier model is trained using default hyperparameters, serving as a baseline for further refinement. The dataset is divided into training and test sets using stratified sampling to maintain the target variable's distribution. The model is trained with 50 estimators (default setting) and a learning rate of 1.0, ensuring that the model can effectively learn from the data while maintaining computational efficiency.
+
+The classification report for the baseline model highlights that while precision for the majority class is high, recall for the minority class (subscribed customers) is comparatively lower, suggesting that the model struggles to capture all positive cases. The confusion matrix further illustrates this issue, as it shows a substantial number of false negatives. Despite this, the ROC-AUC score of 0.9358 suggests that the model has strong overall predictive capability, meaning it can distinguish between subscribed and non-subscribed customers well.
+
+#### Step 1: Define Model Evaluation Function
+Before training, a function is created to evaluate models by computing classification metrics, plotting a confusion matrix, and generating a ROC curve:
+
+```python
+# Model Evaluation Function
+def evaluate_model(model, X_test, y_test, label):
+    y_pred = model.predict(X_test)
+    y_prob = model.predict_proba(X_test)[:, 1]
+    
+    print(f"\nPerformance for {label}:")
+    print(f"Accuracy: {accuracy_score(y_test, y_pred):.4f}")
+    print(f"Precision: {precision_score(y_test, y_pred):.4f}")
+    print(f"Recall: {recall_score(y_test, y_pred):.4f}")
+    print(f"F1 Score: {f1_score(y_test, y_pred):.4f}")
+    print(f"ROC AUC: {roc_auc_score(y_test, y_prob):.4f}")
+    print("\nClassification Report:\n", classification_report(y_test, y_pred))
+
+    # Confusion Matrix
+    cm = confusion_matrix(y_test, y_pred)
+    plt.figure(figsize=(6, 4))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', xticklabels=['No', 'Yes'], yticklabels=['No', 'Yes'])
+    plt.xlabel("Predicted")
+    plt.ylabel("Actual")
+    plt.title(f"Confusion Matrix - {label}")
+    plt.show()
+    
+    # ROC Curve
+    fpr, tpr, _ = roc_curve(y_test, y_prob)
+    plt.figure(figsize=(6, 4))
+    plt.plot(fpr, tpr, label=f'ROC Curve (AUC = {auc(fpr, tpr):.4f}')
+    plt.plot([0, 1], [0, 1], 'k--')
+    plt.xlabel("False Positive Rate")
+    plt.ylabel("True Positive Rate")
+    plt.title(f"ROC Curve - {label}")
+    plt.legend()
+    plt.show()
+```
+
+#### Step 2: Train the Baseline Model
+
+The baseline model was implemented as follows:
+```python
+# Train baseline model
+baseline_model = AdaBoostClassifier(n_estimators = 50, random_state=42)
+baseline_model.fit(X_train, y_train)
+```
+
+#### Step 3: Evaluate the Baseline Model
+
+After training, the baseline model was evaluated using key classification metrics, a confusion matrix, and a ROC curve:
+
+```python
+# Evaluate baseline model
+evaluate_model(baseline_model, X_test, y_test, "Baseline Model")
+```
+
+<b>Baseline Model Performance</b>
+
+The following evaluation metrics summarise the model’s performance:
+
+![](images/adaboostclassifier/baseline_model_performance.png)
+
+
+<b> Confusion Matrix - Baseline Model</b>
+
+The confusion matrix visualises the number of correct and incorrect predictions:
+
+- <b>True Negatives (TN): 5178</b> (Correctly predicted non-subscribed customers)
+- <b>False Positives (FP): 146</b> (Incorrectly predicted non-subscribers as subscribers)
+- <b>False Negatives (FN): 468</b> (Incorrectly predicted subscribers as non-subscribers)
+- <b>True Positives (TP): 304</b> (Correctly predicted subscribed customers)
+
+![](images/adaboostclassifier/confusion_matrix_baseline.png)
+
+
+<b>ROC Curve - Baseline Model</b>
+
+The ROC curve demonstrates the model’s ability to distinguish between subscribed and non-subscribed customers. The <b>AUC score of 0.9358</b> indicates strong classification performance.
+
+![](images/adaboostclassifier/roc_curve_baseline.png)
+
+### Baseline Model Observation
+- The <b>high precision (92%) for the majority class</b> suggests that the model correctly predicts non-subscribed customers with high accuracy.
+- However, the <b>recall for subscribed customers is low (39%)</b>, indicating that the model fails to identify a significant proportion of actual subscribers.
+- The <b>high ROC-AUC score (0.9358)</b> suggests that despite the recall issue, the model effectively distinguishes between the two classes.
+
+This baseline model serves as a <b>reference point</b> for further improvements through <b>hyperparameter tuning</b>, which aims to increase recall and F1-score while maintaining strong overall classification performance.
