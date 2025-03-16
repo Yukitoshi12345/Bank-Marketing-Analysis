@@ -29,6 +29,33 @@ Moro, S., Cortez, P., & Rita, P. (2014). _A Data-Driven Approach to Predict the 
 
 ## Data Preparation and Splitting (Python)
 
+1. Removing Duplicates
+
+- Duplicate records are removed to prevent redundancy and ensure that no data point is overrepresented.
+
+2. Handling Categorical Variables
+
+- The dataset contains categorical features, which must be converted into a numeric format for the model.
+- One-hot encoding is applied to categorical variables, ensuring that they are properly represented without introducing bias.
+
+3. Target Variable Transformation
+
+- The dependent variable (y), originally labeled as "yes" or "no", is mapped to binary values (1 and 0, respectively) to enable classification.
+
+4. Handling Missing or Unknown Values
+
+- Some categorical attributes contain "unknown" values, which may represent missing information. These values are replaced with NaN, and the dataset is cleaned by removing rows with missing values.
+- Missing values could be imputed rather than removed, depending on the dataset size and the significance of missing data.
+
+5. Feature Scaling
+
+- Since AdaBoost is sensitive to feature magnitudes, StandardScaler is applied to numerical features to standardise them.
+- This ensures that all numerical values have similar ranges, improving the stability of the model.
+
+6. Train-Test Split
+
+- The dataset is divided into training (80%) and testing (20%) subsets using stratified sampling, ensuring that the distribution of the target variable is maintained across both sets.
+
 ```python
 # Import libraries
 from sklearn.model_selection import train_test_split
@@ -391,11 +418,12 @@ print(f"Best Parameters: {random_search.best_params_}")
 
 After running the tuning process, the <b>best combination of hyperparameters is selected</b> and stored in `random_search.best_params_`, which will be used to train the final model.
 
-
 ### Hyperparameter Tuning
+
 After optimising the AdaBoostClassifier, the final model is trained using the best hyperparameters identified through RandomizedSearchCV. This refined model is expected to improve recall and F1-score, leading to better identification of subscribed customers.
 
 #### Step 5: Train the Final Model
+
 The best parameters found from the tuning process are now used to train the final AdaBoostClassifier, ensuring an optimal balance between precision and recall.
 
 ```python
@@ -403,9 +431,11 @@ The best parameters found from the tuning process are now used to train the fina
 final_model = random_search.best_estimator_
 final_model.fit(X_train, y_train)
 ```
+
 By retraining the model with optimised parameters, we expect to see improvements in its ability to classify positive cases more effectively.
 
 #### Step 6: Evaluate the Final Model
+
 After training the final model, it is evaluated using the same function applied to the baseline model. The classification report, confusion matrix, and ROC curve are generated to assess improvements in performance.
 
 ```python
@@ -419,7 +449,6 @@ The following evaluation metrics summarise the model’s performance after hyper
 
 ![](images/adaboostclassifier/final_model_performance.png)
 
-
 <b>Confusion Matrix - Final Model</b>
 
 The confusion matrix visualises the number of correct and incorrect predictions:
@@ -430,7 +459,6 @@ The confusion matrix visualises the number of correct and incorrect predictions:
 - <b>True Positives (TP): 315</b> (Correctly predicted subscribed customers)
 
 ![](images/adaboostclassifier/confusion_matrix_final.png)
-
 
 <b> ROC Curve - Final Model</b>
 
@@ -476,12 +504,12 @@ To assess the impact of hyperparameter tuning, the baseline AdaBoostClassifier m
 The table below summarises the key performance metrics for both models:
 
 | **Metric**    | **Baseline Model** | **Final Model** |
-| ------------- | ------------ | ----------- |
-| **Accuracy**  | 89.93%       | 89.80%      |
-| **Recall**    | 67.76%       | 65.62%      |
-| **Precision** | 39.38%       | 40.80%      |
-| **F1 Score**  | 49.75%       | 50.32%      |
-| **AUROC**     | 93.58%       | 93.78%      |
+| ------------- | ------------------ | --------------- |
+| **Accuracy**  | 89.93%             | 89.80%          |
+| **Recall**    | 67.76%             | 65.62%          |
+| **Precision** | 39.38%             | 40.80%          |
+| **F1 Score**  | 49.75%             | 50.32%          |
+| **AUROC**     | 93.58%             | 93.78%          |
 
 These results indicate that hyperparameter tuning led to a slight increase in recall and F1-score, making the final model better at capturing actual subscribers. However, this comes at the cost of a slight decrease in precision, meaning the model produces more false positives.
 
@@ -495,21 +523,19 @@ These results indicate that hyperparameter tuning led to a slight increase in re
 
 Hyperparameter tuning has successfully improved the model’s ability to detect actual subscribers by increasing recall and F1-score while maintaining a high ROC-AUC score. While precision has slightly decreased, the trade-off allows the model to correctly identify more customers who are likely to subscribe. This suggests that the final model is a more effective predictive tool for customer subscription classification, especially in scenarios where capturing all potential subscribers is a higher priority than minimising false positives.
 
-
 ## Model Evaluation: Final Model (Train Set) vs Final Model (Test Set)
 
 After training the final AdaBoostClassifier model, it is essential to compare its performance on the training set and the test set to assess how well it generalises to unseen data. A significant discrepancy between these two evaluations may indicate overfitting, where the model performs well on training data but struggles with new data.
 
-
 The table below summarises the key performance metrics for both models:
 
 | **Metric**    | **Final Model (Train)** | **Final Model (Test)** |
-| ------------- | ------------ | ----------- |
-| **Accuracy**  | 90.59%       | 89.80%      |
-| **Recall**    | 69.74%       | 65.62%      |
-| **Precision** | 45.33%       | 40.80%      |
-| **F1 Score**  | 54.95%       | 50.32%      |
-| **AUROC**     | 94.44%       | 93.78%      |
+| ------------- | ----------------------- | ---------------------- |
+| **Accuracy**  | 90.59%                  | 89.80%                 |
+| **Recall**    | 69.74%                  | 65.62%                 |
+| **Precision** | 45.33%                  | 40.80%                 |
+| **F1 Score**  | 54.95%                  | 50.32%                 |
+| **AUROC**     | 94.44%                  | 93.78%                 |
 
 While there is a minor drop in performance from the train set to the test set, the ROC-AUC score remains high, suggesting that the model still maintains strong classification ability when generalising to unseen data.
 
@@ -518,6 +544,5 @@ While there is a minor drop in performance from the train set to the test set, t
 - Recall drops from 45.33% (train) to 40.80% (test), meaning the model is slightly less confident in predicting actual subscribers in unseen data.
 - Precision is slightly lower on test data (65.62%) compared to training (69.74%), meaning there are slightly more false positives when generalising to new samples.
 - The ROC-AUC score remains high (0.9444 for train, 0.9378 for test), confirming strong classification performance across both sets.
-
 
 The final model generalises well to unseen data, as the test performance remains close to the training performance. The slight decrease in precision and recall suggests that while the model performs well, there is still room for improvement in identifying actual subscribers. However, the high ROC-AUC scores (0.9444 for train, 0.9378 for test) indicate that the model maintains strong overall classification ability. The results suggest that the final AdaBoostClassifier model is effective in predicting customer subscriptions without significant overfitting.
