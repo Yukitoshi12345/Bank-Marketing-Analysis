@@ -469,22 +469,6 @@ The feature importance plot highlights the most influential factors in predictin
 3. <b>Customer demographics</b>, such as <b>age and previous campaign interactions</b>, play a notable role in subscription likelihood.
 4. <b>One-hot encoded categorical variables</b> such as <b>job type, education, and marital status</b> contribute less but still have an impact.
 
-
-## Model Evaluation
-### **Model Evaluation**  
-
-The **final model** is compared to the **baseline model** to evaluate the impact of hyperparameter tuning on classification accuracy and predictive performance. While overall accuracy remains nearly the same, hyperparameter tuning has led to improvements in recall and F1-score.  
-
-#### **Key Observations:**  
-- **Recall improved from 39.38% to 40.80%**, meaning the **final model correctly identifies more subscribed customers (True Positives)** compared to the baseline model.  
-- **F1-score increased from 49.75% to 50.32%**, indicating a better balance between **precision and recall**, leading to a more effective classification model.  
-- **Precision slightly decreased from 67.56% to 65.62%**, which suggests a small increase in **false positives** as the model prioritises recall over precision.  
-- **The ROC-AUC score increased from 93.58% to 93.78%**, reinforcing the **model’s ability to differentiate between customers who will and will not subscribe**.  
-- The **confusion matrix shows a reduction in false negatives**, suggesting that the final model has **improved its ability to capture actual subscribers** while maintaining a high number of correctly predicted non-subscribers.  
-- The **final model demonstrates a slight trade-off**, sacrificing some precision to achieve higher recall, which is beneficial in cases where identifying potential subscribers is more important than minimising false positives.  
-
-Overall, **hyperparameter tuning has successfully optimised the AdaBoostClassifier**, making it a **more effective model for predicting customer subscriptions** by improving its ability to capture potential subscribers while maintaining high classification performance.
-
 ## Model Evaluation: Baseline Model vs Final Model
 
 To assess the impact of hyperparameter tuning, the baseline AdaBoostClassifier model is compared to the final optimised model. This evaluation focuses on key classification metrics, including accuracy, precision, recall, F1-score, and ROC-AUC, to determine whether the optimised model has improved over the initial version.
@@ -510,3 +494,30 @@ These results indicate that hyperparameter tuning led to a slight increase in re
 - For the ROC Curve Model, the increase in AUC from 0.9358 to 0.9378 suggests a slight improvement in the model’s ability to distinguish between subscribed and non-subscribed customers.
 
 Hyperparameter tuning has successfully improved the model’s ability to detect actual subscribers by increasing recall and F1-score while maintaining a high ROC-AUC score. While precision has slightly decreased, the trade-off allows the model to correctly identify more customers who are likely to subscribe. This suggests that the final model is a more effective predictive tool for customer subscription classification, especially in scenarios where capturing all potential subscribers is a higher priority than minimising false positives.
+
+
+## Model Evaluation: Final Model (Train Set) vs Final Model (Test Set)
+
+After training the final AdaBoostClassifier model, it is essential to compare its performance on the training set and the test set to assess how well it generalises to unseen data. A significant discrepancy between these two evaluations may indicate overfitting, where the model performs well on training data but struggles with new data.
+
+
+The table below summarises the key performance metrics for both models:
+
+| **Metric**    | **Final Model (Train)** | **Final Model (Test)** |
+| ------------- | ------------ | ----------- |
+| **Accuracy**  | 90.59%       | 89.80%      |
+| **Recall**    | 69.74%       | 65.62%      |
+| **Precision** | 45.33%       | 40.80%      |
+| **F1 Score**  | 54.95%       | 50.32%      |
+| **AUROC**     | 94.44%       | 93.78%      |
+
+While there is a minor drop in performance from the train set to the test set, the ROC-AUC score remains high, suggesting that the model still maintains strong classification ability when generalising to unseen data.
+
+- Performance drops slightly from training to test data, which is expected but does not indicate severe overfitting.
+- Accuracy decreases from 90.59% (train) to 89.80% (test), showing a small generalisation gap.
+- Recall drops from 45.33% (train) to 40.80% (test), meaning the model is slightly less confident in predicting actual subscribers in unseen data.
+- Precision is slightly lower on test data (65.62%) compared to training (69.74%), meaning there are slightly more false positives when generalising to new samples.
+- The ROC-AUC score remains high (0.9444 for train, 0.9378 for test), confirming strong classification performance across both sets.
+
+
+The final model generalises well to unseen data, as the test performance remains close to the training performance. The slight decrease in precision and recall suggests that while the model performs well, there is still room for improvement in identifying actual subscribers. However, the high ROC-AUC scores (0.9444 for train, 0.9378 for test) indicate that the model maintains strong overall classification ability. The results suggest that the final AdaBoostClassifier model is effective in predicting customer subscriptions without significant overfitting.
