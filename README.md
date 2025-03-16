@@ -35,8 +35,15 @@ import pandas as pd
 # Load the dataset
 df = pd.read_csv('bank-additional-full.csv', sep=';')
 
+# Remove duplicates
+df.drop_duplicates(inplace=True)
+
 # Encode target ('y'): 'yes' → 1, 'no' → 0
 df['y'] = df['y'].map({'yes': 1, 'no': 0}).astype(int)
+
+# Handling missing or unknown values
+df.replace("unknown", np.nan, inplace=True)
+df.dropna(inplace=True)  # Drop rows with missing values (alternative: impute values)
 
 # Split into features and target
 X = df.drop(columns='y')
@@ -198,3 +205,53 @@ Our business problem is to term deposit subscription, as such we will focus on p
 
 A more detailed classification report and confusion matrix is shown in the figure below:
 
+
+
+## Model 3: AdaBoostClassifier
+AdaBoostClassifier (Adaptive Boosting Classifier) is an ensemble learning algorithm that combines multiple weak classifiers to form a strong predictive model. It works by iteratively training weak learners, adjusting their weights to focus on misclassified instances, and combining their predictions to improve overall accuracy. Unlike traditional models that treat all samples equally, AdaBoostClassifier assigns higher importance to difficult-to-classify examples, allowing it to refine decision boundaries over multiple iterations. By leveraging weak learners such as decision stumps (single-level decision trees), AdaBoostClassifier enhances classification performance while maintaining computational efficiency.
+
+### Justification of Model Choice
+- <b>AdaBoostClassifier is effective for classification problems </b>, making it suitable for predicting whether a customer will subscribe to a financial product.
+- <b>It enhances weak learners </b> by iteratively refining their predictions, reducing bias and improving overall performance.
+- <b>The model can handle both linear and non-linear relationships</b>, allowing it to capture complex patterns in the dataset.
+- <b>AdaBoostClassifier performs well with structured tabular data</b>, making it ideal for datasets with a mix of numerical and categorical variables (after one-hot encoding).
+- <b>It does not require extensive parameter tuning </b> or strong assumptions about the data, making it a practical and interpretable choice for customer subscription prediction.
+
+### Libraries Used 
+
+The implementation of **AdaBoostClassifier** relies on several Python libraries for **data handling, preprocessing, model training, evaluation, and visualisation**. Below is an overview of the libraries used in this study:  
+
+- **pandas**: Used for loading, cleaning, and transforming the dataset into a structured format suitable for machine learning.  
+- **numpy**: Provides support for numerical computations and array operations, ensuring efficient data processing.  
+- **seaborn**: Used for advanced data visualisation, particularly for analysing feature distributions and plotting confusion matrices.  
+- **matplotlib.pyplot**: Used for generating various plots, including feature importance graphs, ROC curves, and confusion matrices.  
+- **sklearn.model_selection**: Provides **train_test_split** for splitting the dataset into training and testing sets, and **RandomizedSearchCV** for hyperparameter tuning.  
+- **sklearn.preprocessing**: Includes **StandardScaler**, which is used to standardise numerical features, ensuring uniform feature scaling.  
+- **sklearn.ensemble**: Contains **AdaBoostClassifier**, the core model used for classification in this study.  
+- **sklearn.metrics**: Provides multiple evaluation metrics, including **accuracy_score, precision_score, recall_score, f1_score, roc_auc_score**, as well as functions for generating **classification reports, confusion matrices, and ROC curves**.  
+
+These libraries collectively enable the efficient development, tuning, and evaluation of the **AdaBoostClassifier** while ensuring that the model is both interpretable and well-optimised.
+
+```python
+import pandas as pd
+import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split, RandomizedSearchCV
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, classification_report, confusion_matrix, roc_curve, auc
+```
+
+### Data Pre-Processing
+The dataset used in this study has already undergone extensive preprocessing, as outlined in the group section. This includes <b> removing duplicate records, handling missing or unknown values, encoding categorical variables through one-hot encoding </b>, and <b> splitting the dataset into training and testing sets</b> using stratified sampling to maintain class distribution. These steps ensure that the data is well-structured and suitable for classification.
+
+For this specific implementation of <b>AdaBoostClassifier</b>, an additional preprocessing step is applied — <b>Feature Scaling</b>. Since AdaBoost is sensitive to feature magnitudes, standardisation is performed using <b>StandardScaler</b>, transforming numerical features to have <b>zero mean and unit variance</b>. This prevents attributes with larger scales from disproportionately influencing the learning process. The transformation is applied as follows:
+
+```python
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+```
+
+Applying standardisation ensures that numerical attributes such as <b>age, balance, and duration</b> remain on a consistent scale, contributing to improved model stability and performance. With these preprocessing steps in place, the dataset is fully prepared for training the <b>AdaBoostClassifier</b>, enabling an effective and unbiased evaluation of its predictive capabilities.
