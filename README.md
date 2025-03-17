@@ -475,7 +475,7 @@ The ROC curve demonstrates the model’s ability to distinguish between subscrib
 
 Overall, <b>hyperparameter tuning has successfully optimised the AdaBoostClassifier</b>, improving its ability to correctly identify customers who are likely to subscribe, while maintaining strong classification accuracy.
 
-## Feature Importance Analysis
+### Feature Importance Analysis
 
 To understand which factors contribute the most to customer subscription decisions, a feature importance analysis is conducted. The AdaBoostClassifier assigns different weights to features based on their impact on improving classification accuracy. This analysis provides valuable insights into which attributes play a key role in predicting customer subscriptions, allowing for targeted marketing and customer engagement strategies.
 
@@ -497,7 +497,7 @@ The feature importance plot highlights the most influential factors in predictin
 3. <b>Customer demographics</b>, such as <b>age and previous campaign interactions</b>, play a notable role in subscription likelihood.
 4. <b>One-hot encoded categorical variables</b> such as <b>job type, education, and marital status</b> contribute less but still have an impact.
 
-## Model Evaluation: Baseline Model vs Final Model
+### Model Evaluation: Baseline Model vs Final Model
 
 To assess the impact of hyperparameter tuning, the baseline AdaBoostClassifier model is compared to the final optimised model. This evaluation focuses on key classification metrics, including accuracy, precision, recall, F1-score, and ROC-AUC, to determine whether the optimised model has improved over the initial version.
 
@@ -523,7 +523,7 @@ These results indicate that hyperparameter tuning led to a slight increase in re
 
 Hyperparameter tuning has successfully improved the model’s ability to detect actual subscribers by increasing recall and F1-score while maintaining a high ROC-AUC score. While precision has slightly decreased, the trade-off allows the model to correctly identify more customers who are likely to subscribe. This suggests that the final model is a more effective predictive tool for customer subscription classification, especially in scenarios where capturing all potential subscribers is a higher priority than minimising false positives.
 
-## Model Evaluation: Final Model (Train Set) vs Final Model (Test Set)
+### Model Evaluation: Final Model (Train Set) vs Final Model (Test Set)
 
 After training the final AdaBoostClassifier model, it is essential to compare its performance on the training set and the test set to assess how well it generalises to unseen data. A significant discrepancy between these two evaluations may indicate overfitting, where the model performs well on training data but struggles with new data.
 
