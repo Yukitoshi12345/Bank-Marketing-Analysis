@@ -123,6 +123,7 @@ The dataset has an **11.26% positive class rate**, highlighting the importance o
 - **Limitation:** Provides a single score, masking individual performance aspects.
 
 ## Model 1: AdaBoostClassifier
+
 <b>Analysed by: Yukitoshi Imaizumi Zhou</b>
 
 <b>Student ID: 470445952</b>
@@ -299,7 +300,7 @@ print(f"Best Parameters: {random_search.best_params_}")
 
 After running the tuning process, the <b>best combination of hyperparameters is selected</b> and stored in `random_search.best_params_`, which will be used to train the final model.
 
-### Hyperparameter Tuning
+### Final Model Training and Evaluation
 
 After optimising the AdaBoostClassifier, the final model is trained using the best hyperparameters identified through RandomizedSearchCV. This refined model is expected to improve recall and F1-score, leading to better identification of subscribed customers.
 
@@ -428,8 +429,8 @@ While there is a minor drop in performance from the train set to the test set, t
 
 The final model generalises well to unseen data, as the test performance remains close to the training performance. The slight decrease in precision and recall suggests that while the model performs well, there is still room for improvement in identifying actual subscribers. However, the high ROC-AUC scores (0.9444 for train, 0.9378 for test) indicate that the model maintains strong overall classification ability. The results suggest that the final AdaBoostClassifier model is effective in predicting customer subscriptions without significant overfitting.
 
-
 ## Model 2: Gradient Boosting Machine (GBM)
+
 <b>Analysed by: Chonhyangzi Teng</b>
 
 <b>Student ID: 312044712</b>
@@ -610,17 +611,17 @@ print(precision_recall_fscore_support(y_test, y_predgb))
 
 ![](images/gradientboost/AUC_GradientBoost.png)
 
-
 ## Model 3: Random Forest
+
 <b>Analysed by: Thomas Ilchef</b>
 
 <b>Student ID: 440243151</b>
 
 ## Model 4: Support Vector Machine
+
 <b>Analysed by: Fiona Shen</b>
 
 <b>Student ID: 312045468</b>
-
 
 ## Model Comparison
 
