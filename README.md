@@ -197,7 +197,7 @@ grid_search.fit(X_train, Y_train)
 
 Figure below shows the result of grid search. Evident by the chart, ‘max_depth’ of 5 and ‘n_estimators’ of 75 gives the best average score in the testing set of the cross-validation process, thus selected to fit the final model.
 
-![](/GradientBoostingImage.png)
+![](images/gradientboost/GradientBoostingImage.png)
 
 ### Final Model
 
@@ -205,7 +205,7 @@ After selecting the parameter, a final model is fitted on all training dataset a
 
 The top 10 important feature with its importance score produced by the final model is shown in figure below:
 
-![](/FinalModel_GradientBoosting.png)
+![](images/gradientboost/FinalModel_GradientBoosting.png)
 
 Code used to fit the final model as below:
 
@@ -229,18 +229,18 @@ Our business problem is to term deposit subscription, as such we will focus on p
 
 | **Metric**    | **Training** | **Testing** |
 | ------------- | ------------ | ----------- |
-| **Accuracy**  | 92.74%       | 91.78%      |
-| **Recall**    | 0.583        | 0.519       |
-| **Precision** | 0.719        | 0.676       |
-| **F1 Score**  | 0.644        | 0.587       |
-| **AUROC**     | 0.956        | 0.948       |
+| **Accuracy**  | 92.38%       | 90.60%      |
+| **Recall**    | 62.61%       | 55.44%      |
+| **Precision** | 73.27%       | 65.14%      |
+| **F1 Score**  | 67.52%       | 59.90%      |
+| **AUROC**     | 95.73%       | 94.51%      |
 
 - There is no significant drop in performance between training and testing data indicating the model is not overfitted. This is also demonstrated in the hyper parameter tuning process where the parameter is chosen to prevent over-fitting.
 - We can see the model has high accuracy of 92% this is higher than accuracy can be achieved if predict everything to negative. This means the model has successfully identified a good amount of correct positive and negative classes.
-- The precision score for the positive class (Subscribed) is 67%, this means 67% of the predicted positive cases subscribed to the term deposits. The perfect precision score is 100%, 67% is a good performance.
-- The recall score for positive class is 52%, it means 52% of clients that will subscribe to a term deposit are picked by the model. This is a good performance, considering only 12% of clients in the dataset subscribed to term deposits. The model works better than randomly selecting a client to target.
+- The precision score for the positive class (Subscribed) is 65%, this means 65% of the predicted positive cases subscribed to the term deposits. The perfect precision score is 100%, 65% is a good performance.
+- The recall score for positive class is 55%, it means 55% of clients that will subscribe to a term deposit are picked by the model. This is a good performance, considering only 12% of clients in the dataset subscribed to term deposits. The model works better than randomly selecting a client to target.
 - Both recall and precision score are good for class 1 (subscribed), as expected the F1 score which is the harmonic mean of both recall and precision also gives good performance.
-- Area Under the Receiver Operating Characteristics (AUROC) is a probability curve that plots the True Positive Rate against the False Positive Rate is also assessed. It is one of the most important metrics to measure the ability of a classifier to distinguish between classes, which ranges from 0.5 to 1. An AUROC of 0.948 indicating the model is excellent at distinguishing between clients that will subscribe or not.
+- Area Under the Receiver Operating Characteristics (AUROC) is a probability curve that plots the True Positive Rate against the False Positive Rate is also assessed. It is one of the most important metrics to measure the ability of a classifier to distinguish between classes, which ranges from 0.5 to 1. An AUROC of 0.945 indicating the model is excellent at distinguishing between clients that will subscribe or not.
 
 A more detailed classification report and confusion matrix is shown in the figure below:
 
@@ -556,7 +556,7 @@ The table below summarises the performance of the different classification model
 | **Model**                  | **Accuracy** | **Recall** | **Precision** | **F1 Score** | **AUROC** |
 | -------------------------- | ------------ | ---------- | ------------- | ------------ | --------- |
 | **AdaBoost Classifier**    | 89.80%       | 40.80%     | 65.62%        | 50.32%       | 93.78%    |
-| **GBM**                    | 92%          | 52%        | 68%           | 59%          | 94.9%     |
+| **GBM**                    | 90.60%          | 55.44%        | 65.14%           | 59.90%          | 94.52%     |
 | **Random Forest**          | 92%          | 51%        | 67%           | 58%          | 94.2%     |
 | **Support Vector Machine** | 91%          | 38%        | 65%           | 49%          | 67.6%     |
 
