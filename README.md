@@ -625,9 +625,9 @@ The proposed model discriminates fairly well - and has a relatively high accurac
 
 ### Data Preprocessing
 
-Data has been explored and analysed extensively as part of previous stages - it is clean and complete, with no additional transformations required to use. 
+Data has been explored and analysed extensively as part of previous stages - it is clean and complete, with no additional transformations required to use.
 
-The dataset does need to be an array - with purely numerical input data, so the categorical variables are hot encoded, prior to array coercion. This is required for features only, as the outcome (Y_test and Y_train) are already made numeric. 
+The dataset does need to be an array - with purely numerical input data, so the categorical variables are hot encoded, prior to array coercion. This is required for features only, as the outcome (Y_test and Y_train) are already made numeric.
 
 ```python
 from sklearn.model_selection import train_test_split
@@ -665,7 +665,8 @@ X_test = np.array(X_test)
 ```
 
 ### Initial Baseline Model
-A ‘primitive’ model is built to get a rough ideaof what ‘out-of-the-box’ accuracy and  discrimination looks like. For this a random forest is built using default settings and a ‘typical’ number of trees (1000) - it took roughly 2 minutes to train.
+
+A ‘primitive’ model is built to get a rough ideaof what ‘out-of-the-box’ accuracy and discrimination looks like. For this a random forest is built using default settings and a ‘typical’ number of trees (1000) - it took roughly 2 minutes to train.
 
 ![](images/randomforest/time_elapsed.png)
 
@@ -678,23 +679,23 @@ import numpy as np
 
 def evaluate(rf, X_test, Y_test):
     predictions = rf.predict(X_test)
-    
+
     # Calculate AUC
     auc = metrics.roc_auc_score(Y_test, predictions)
-    
+
     print('Model Performance:')
     print(f'Area under ROC: {auc*100:.2f}%')
     print(f'Gini Coefficient / Somers D: {(2*auc-1)*100:.2f}%')
-    
+
     # Generate Classification Report
     predictions_discrete = np.where(predictions > 0.5, 1, 0)
     print('Classification Report (using 50% probability cut-off):')
     print(classification_report(Y_test, predictions_discrete))
-    
+
     # Calculate Accuracy
     accuracy = metrics.accuracy_score(Y_test, predictions_discrete)
     print(f'Accuracy: {accuracy*100:.2f}%')
-    
+
     return accuracy
 
 # Call the function and store accuracy
@@ -703,36 +704,37 @@ accuracy = evaluate(rf_b, X_test, Y_test)
 
 ![](images/randomforest/baseline_model_performance.png)
 
-
 ### Hyperparameter Tuning
 
-There are 16 parameters to tune in sklearn random forest. Normally brute force experimentation  could be used to iterate through each variable, however with 16 variables (many requiring continuous imput) this becomes too large (well over 1m iterations even at sensible quantums). 
+There are 16 parameters to tune in sklearn random forest. Normally brute force experimentation could be used to iterate through each variable, however with 16 variables (many requiring continuous imput) this becomes too large (well over 1m iterations even at sensible quantums).
 
-Not all hyperparameters are highly critical/influential. Documentation and literature suggests  number of trees in forest (n_estimators) and number of features (max_features) are of particular importance. 
+Not all hyperparameters are highly critical/influential. Documentation and literature suggests number of trees in forest (n_estimators) and number of features (max_features) are of particular importance.
 
-A full list of hyperparameters for RandomForestRegressor() is sought out: 
+A full list of hyperparameters for RandomForestRegressor() is sought out:
 
 ![](images/randomforest/hyperparameters.png)
 
-Key hyper-parameters were sought to be optimised, through iterative model fits - and assessing discrimination (gini ie. normalised area under ROC). The models are fit on a random 25% sample and fit on the remaining 75%. This is due to the large number of runs  required, at 2+ minutes per run, is untenable. 
+Key hyper-parameters were sought to be optimised, through iterative model fits - and assessing discrimination (gini ie. normalised area under ROC). The models are fit on a random 25% sample and fit on the remaining 75%. This is due to the large number of runs required, at 2+ minutes per run, is untenable.
 
-This approach is a little unorthodox, but necessary given run time restraints - and key principles of validating statistical models are not violated: 
-- Models are not assessed on the data they are fitted on 
-- Models are assessed on data (remaining 75%) that is wholly independent of final test data, removing the risk of overfitting through iterative runs 
+This approach is a little unorthodox, but necessary given run time restraints - and key principles of validating statistical models are not violated:
 
-A little more leniency on methodology is available for random forests, as the trees train independently, and are highly resilient to overfitting. 
+- Models are not assessed on the data they are fitted on
+- Models are assessed on data (remaining 75%) that is wholly independent of final test data, removing the risk of overfitting through iterative runs
+
+A little more leniency on methodology is available for random forests, as the trees train independently, and are highly resilient to overfitting.
 
 ```python
 X_train_small, X_test_small, Y_train_small, Y_test_small = train_test_split(X_train, Y_train, test_size=0.75,
                                                     random_state=7,stratify = Y_train)
 ```
 
-The following 4 hyper-parameters were optimised initially. They were done one by 
+The following 4 hyper-parameters were optimised initially. They were done one by
 one, rather than as a grid search, to minimise runs by several orders of magnitude.
-- Number of trees 
-- Max Features Method 
-- Bootstrapping (Yes/No) 
-- Maximum levels in tree 
+
+- Number of trees
+- Max Features Method
+- Bootstrapping (Yes/No)
+- Maximum levels in tree
 
 ```python
 import matplotlib.pyplot as plt
@@ -742,25 +744,24 @@ n_trees = []
 for i in [1,5,25,50,500,1000,1500,2000]:
     rf  = RandomForestRegressor(n_estimators = i, random_state = 7)
     rf.fit(X_train_small,Y_train_small)
-    
+
     predictions = rf.predict(X_test_small)
     gini = (2*metrics.roc_auc_score(Y_test_small,predictions)-1)*100
-    
+
     ginis.append(gini)
     n_trees.append(i)
 
-    
- 
+
+
 plt.plot(n_trees, ginis, c='b', label='Gini (on testing data)')
 plt.ylim(0,100)
 plt.ylabel('Gini/ Normalised AUC')
 plt.xlabel('Number of Trees')
 plt.legend()
-plt.show()   
+plt.show()
 ```
 
 ![](images/randomforest/gini_testing_data.png)
-
 
 ```python
 ginis = []
@@ -772,14 +773,14 @@ for i in ['auto', 'sqrt']:
         max_feat = 'sqrt'  # 'auto' is equivalent to 'sqrt'
     else:
         max_feat = i
-    
+
     rf = RandomForestRegressor(n_estimators=2000, max_features=max_feat, random_state=7)
     rf.fit(X_train_small, Y_train_small)
-    
+
     predictions = rf.predict(X_test_small)
     auc = metrics.roc_auc_score(Y_test_small, predictions)
     gini = (2 * auc - 1) * 100
-    
+
     ginis.append(gini)
     max_features.append(i)
 
@@ -796,7 +797,6 @@ plt.show()
 
 ![](images/randomforest/gini_comparison.png)
 
-
 ```python
 ginis = []
 bootstrap_labels = []
@@ -809,24 +809,24 @@ for i in [True, False]:
         random_state=7,
         bootstrap=i
     )
-    
+
     rf.fit(X_train_small, Y_train_small)
-    
+
     predictions = rf.predict(X_test_small)
     auc = metrics.roc_auc_score(Y_test_small, predictions)
     gini = (2 * auc - 1) * 100
-    
+
     ginis.append(gini)
     bootstrap_labels.append('True' if i else 'False')
 
 # Plot Gini results
 plt.figure(figsize=(6, 4))
 plt.bar(
-    bootstrap_labels, 
-    ginis, 
-    color='royalblue', 
-    width=0.6, 
-    edgecolor='black', 
+    bootstrap_labels,
+    ginis,
+    color='royalblue',
+    width=0.6,
+    edgecolor='black',
     alpha=0.85,
     label='Gini (on testing data)'
 )
@@ -843,7 +843,6 @@ plt.show()
 
 ![](images/randomforest/gini_score_bootstrapping.png)
 
-
 ```python
 import matplotlib.pyplot as plt
 ginis = []
@@ -858,12 +857,12 @@ for i in [1, 5, 15, 30, None]:
         bootstrap=True,
         max_depth=i
     )
-    
+
     rf.fit(X_train_small, Y_train_small)
-    
+
     predictions = rf.predict(X_test_small)
     gini = (2 * metrics.roc_auc_score(Y_test_small, predictions) - 1) * 100
-    
+
     ginis.append(gini)
     max_depth.append(str(i) if i is not None else "None")
 
@@ -880,23 +879,21 @@ plt.show()
 
 ![](images/randomforest/gini_score_tree_depth.png)
 
-
 ### Interpretation & Discussion
 
-Number of trees was highly influential. Low number of trees (i.e. 1) start with out-of-training sample gini of < 50%. The gini improves rapidly as number of trees , although the rate at which improvement in discrimination is seen greatly diminishes at around 100. The Gini does improve continuously however, and without significant runtime constraints a value of 2000 can be selected. 
+Number of trees was highly influential. Low number of trees (i.e. 1) start with out-of-training sample gini of < 50%. The gini improves rapidly as number of trees , although the rate at which improvement in discrimination is seen greatly diminishes at around 100. The Gini does improve continuously however, and without significant runtime constraints a value of 2000 can be selected.
 
-In a BAU environment, once the model is trained, predicting on new data is not particularly time consuming (c. 10 seconds) - so the marginal improvement in discrimination is theoretically still valuable. 
+In a BAU environment, once the model is trained, predicting on new data is not particularly time consuming (c. 10 seconds) - so the marginal improvement in discrimination is theoretically still valuable.
 
-Max features was not found to be incredibly influential - despite literature and stack overflow speculation. It is worth mentioning that only two methods were tested - auto and square root. Auto, which was marginally better, is selected. 
+Max features was not found to be incredibly influential - despite literature and stack overflow speculation. It is worth mentioning that only two methods were tested - auto and square root. Auto, which was marginally better, is selected.
 
-Bootstrapping came with enormous performance benefits vs. not - presumably this is partially due to the small test data sample, and data scarcity issues that would deliver without bootstrapping. Bootstrapping is included, 
+Bootstrapping came with enormous performance benefits vs. not - presumably this is partially due to the small test data sample, and data scarcity issues that would deliver without bootstrapping. Bootstrapping is included,
 
-Number of levels in Tree was pretty similar for 5+ - but ran into performance issues below 5. 5 is used in the final model, but testing does not indicate this is a super important parameter for most sensible values - as long as it is not very small. 
-
+Number of levels in Tree was pretty similar for 5+ - but ran into performance issues below 5. 5 is used in the final model, but testing does not indicate this is a super important parameter for most sensible values - as long as it is not very small.
 
 ### Results
 
-A final model was built using the **entire training dataset** with the selected hyperparameters. The model was then **fully evaluated on the training dataset** to assess its performance under the optimised settings.  
+A final model was built using the **entire training dataset** with the selected hyperparameters. The model was then **fully evaluated on the training dataset** to assess its performance under the optimised settings.
 
 This approach ensures that the model leverages the full training data for maximum learning capacity while using carefully selected parameters to maintain efficiency and generalisation ability.
 
@@ -904,7 +901,7 @@ This approach ensures that the model leverages the full training data for maximu
 rf_final  = RandomForestRegressor(n_estimators = 2000,max_features='sqrt', random_state = 7,bootstrap = True,max_depth=5)
 
 rf_final.fit(X_train_small,Y_train_small)
-    
+
 predictions = rf_final.predict(X_test)
 
 accuracy = evaluate(rf_final,X_test,Y_test)
@@ -912,20 +909,21 @@ accuracy = evaluate(rf_final,X_test,Y_test)
 
 ![](images/randomforest/final_model_performance.png)
 
-In summary tuning the hyperparameters has offered an underwhelming benefit in some areas - with offsetting tradeoffs in others. 
-- Accuracy has increased 1% to 92%. 
-- AUROC (i.e. discrimination) has decreased 1%, from 95% to 94% 
-- precision has improved 3% for succesfull sales 
-- recall has deteriorated 2% 
-- f1-score is unchanged 
+In summary tuning the hyperparameters has offered an underwhelming benefit in some areas - with offsetting tradeoffs in others.
 
-On the bright side, the model performs relatively well both before and after the tune. 
-Discrimination - perhaps the best measure of binary classification suitability on unbalanced 
-data, remains high - with a AUC of 94% (normalised equivalent of 88%). Accurarcy is also 
-relatively high at the somewhat arbitrary, but intuitive cutoff of 50%. 
+- Accuracy has increased 1% to 92%.
+- AUROC (i.e. discrimination) has decreased 1%, from 95% to 94%
+- precision has improved 3% for succesfull sales
+- recall has deteriorated 2%
+- f1-score is unchanged
 
-Both Recall and precision are particularly high for class 0 - i.e. failed subscriptions. This is 
-useful from a business perspective, as it can be used to eliminate calls that are unlikely to 
+On the bright side, the model performs relatively well both before and after the tune.
+Discrimination - perhaps the best measure of binary classification suitability on unbalanced
+data, remains high - with a AUC of 94% (normalised equivalent of 88%). Accurarcy is also
+relatively high at the somewhat arbitrary, but intuitive cutoff of 50%.
+
+Both Recall and precision are particularly high for class 0 - i.e. failed subscriptions. This is
+useful from a business perspective, as it can be used to eliminate calls that are unlikely to
 succeed - reducing operational costs.
 
 ```python
@@ -943,18 +941,18 @@ ax=sns.heatmap(test, annot=True,fmt='.0f',cmap="Purples")
 ax.set(xlabel='True Outcome',ylabel='Predicted Outcome')
 plt.show
 ```
+
 ![](images/randomforest/final_model_heatmap.png)
 
 The model struggles with success recall, and produces a relatively high proportion of False Negatives. However these accuracy metrics are assessed at an arbitrary cutoff of 50%. The rate of False Positives/False negatives would be altered in inverse proportions by picking another cutoff - as such the gini, which is independent of any defined probability cutoff, is considered a better metric.
-
 
 Finally feature importance is computed - to better inform:
 
 ![](images/randomforest/feature_importance.png)
 
-A relatively small number of variables drive much of the predictive power - predominantly duration, employment, 3 month euribor and days. 
- 
-We can see successes tend to happen at lower Euribor and higher durations - both in predicted and actual outcomes: 
+A relatively small number of variables drive much of the predictive power - predominantly duration, employment, 3 month euribor and days.
+
+We can see successes tend to happen at lower Euribor and higher durations - both in predicted and actual outcomes:
 
 ```python
 plot_no = X_test_copy.copy()
@@ -984,13 +982,28 @@ plt.show()
 
 ![](images/randomforest/actual_predicted_marketing.png)
 
-
-
 ## Model 4: Support Vector Machine
 
 <b>Analysed by: Fiona Shen</b>
 
 <b>Student ID: 312045468</b>
+
+Support vector machines (SVM) are supervised machine learning models which are commonly used for classification problems. SVM separate data into different classes by finding a hyperplane (a decision boundary) with the largest amount of margin. The main goal of SVM is to find an optimal hyperplane that divides the dataset into classes and helps
+in classifying new data points. SVM is selected as:
+
+- SVM works well with high-dimensional datasets.
+- SVM generally offers high degree of accuracy comparing to other
+  classification algorithms such as k-Nearest Neighbour algorithm.
+- SVM can perform linear as well as non-linear classification by utilising
+  different kernel.
+- SVM is easy to understand, and only simple transformation of data is required.
+
+### Data Preprocessing
+
+- Use LabelEncoder from sklearn.preprocessing to transform categorical data to numerical data as SVM does not natively handle categorical data.
+- Then use scale from sklearn.preprocessing to normalise data which could reduce the processing time.
+
+[continue]
 
 ## Model Comparison
 
@@ -1000,7 +1013,7 @@ The table below summarises the performance of the different classification model
 | -------------------------- | ------------ | ---------- | ------------- | ------------ | --------- |
 | **AdaBoost Classifier**    | 89.80%       | 40.80%     | 65.62%        | 50.32%       | 93.78%    |
 | **GBM**                    | 90.60%       | 55.44%     | 65.14%        | 59.90%       | 94.52%    |
-| **Random Forest**          | 92%          | 51%        | 67%           | 58%          | 94.2%     |
+| **Random Forest**          | 90.20%       | 16%        | 83%           | 27%          | 92.2%     |
 | **Support Vector Machine** | 91%          | 38%        | 65%           | 49%          | 67.6%     |
 
 ## Model Strengths, Weaknesses, and Improvements
