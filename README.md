@@ -617,6 +617,375 @@ print(precision_recall_fscore_support(y_test, y_predgb))
 
 <b>Student ID: 440243151</b>
 
+Tree and Tree-based algorithms were selected as pre-eminent forerunners as part of Assignment 2A. Of these, two particular algorithms were investigated, Random Forest and Gradient Boosting, in addition to a single tree model. Literature and popular consensus on seems to indicate that GB and RF perform very similarly, and have similar strengths and limitations. The primary difference if that Random Forest’s train their trees independently, whereas gradient boosting train their trees iteratively - on the error of previous iterations.
+
+This tends to make Gradient Boosted Trees more accurate and better discriminators - although also more prone to overfitting.
+
+The proposed model discriminates fairly well - and has a relatively high accuracy of 92%. Hyper-parameter tuning yielded marginal improvements - however it would not be commercially viable to perform this hyperparameter tuning on an ongoing basis, given incremental improvements.
+
+### Data Preprocessing
+
+Data has been explored and analysed extensively as part of previous stages - it is clean and complete, with no additional transformations required to use. 
+
+The dataset does need to be an array - with purely numerical input data, so the categorical variables are hot encoded, prior to array coercion. This is required for features only, as the outcome (Y_test and Y_train) are already made numeric. 
+
+```python
+from sklearn.model_selection import train_test_split
+
+# df.drop_duplicates(inplace=True)
+
+df.loc[(df.y == 'yes'),'y'] = 1
+df.loc[(df.y == 'no'),'y']= 0
+df['y'] = df['y'].astype(int)
+
+bank_data = df.iloc[:, :-1]
+bank_y = df['y'].astype(int)
+
+df.replace("unknown", np.nan, inplace=True)
+df.dropna(inplace=True)
+
+df = pd.get_dummies(df, drop_first=True)
+
+X = df.drop(columns=['y'])
+y = df['y']
+
+
+X_train, X_test, Y_train, Y_test = train_test_split(bank_data, bank_y, test_size=0.2,
+                                                    random_state=7,stratify = bank_y)
+
+
+X_test_copy = X_test
+X_train = pd.get_dummies(X_train)
+X_test = pd.get_dummies(X_test)
+
+feature_list = list(X_train.columns)
+
+X_train = np.array(X_train)
+X_test = np.array(X_test)
+```
+
+### Initial Baseline Model
+A ‘primitive’ model is built to get a rough ideaof what ‘out-of-the-box’ accuracy and  discrimination looks like. For this a random forest is built using default settings and a ‘typical’ number of trees (1000) - it took roughly 2 minutes to train.
+
+![](images/randomforest/time_elapsed.png)
+
+This model is assessed for AUROC, and key classification statistics:
+
+```python
+from sklearn import metrics
+from sklearn.metrics import classification_report
+import numpy as np
+
+def evaluate(rf, X_test, Y_test):
+    predictions = rf.predict(X_test)
+    
+    # Calculate AUC
+    auc = metrics.roc_auc_score(Y_test, predictions)
+    
+    print('Model Performance:')
+    print(f'Area under ROC: {auc*100:.2f}%')
+    print(f'Gini Coefficient / Somers D: {(2*auc-1)*100:.2f}%')
+    
+    # Generate Classification Report
+    predictions_discrete = np.where(predictions > 0.5, 1, 0)
+    print('Classification Report (using 50% probability cut-off):')
+    print(classification_report(Y_test, predictions_discrete))
+    
+    # Calculate Accuracy
+    accuracy = metrics.accuracy_score(Y_test, predictions_discrete)
+    print(f'Accuracy: {accuracy*100:.2f}%')
+    
+    return accuracy
+
+# Call the function and store accuracy
+accuracy = evaluate(rf_b, X_test, Y_test)
+```
+
+![](images/randomforest/baseline_model_performance.png)
+
+
+### Hyperparameter Tuning
+
+There are 16 parameters to tune in sklearn random forest. Normally brute force experimentation  could be used to iterate through each variable, however with 16 variables (many requiring continuous imput) this becomes too large (well over 1m iterations even at sensible quantums). 
+
+Not all hyperparameters are highly critical/influential. Documentation and literature suggests  number of trees in forest (n_estimators) and number of features (max_features) are of particular importance. 
+
+A full list of hyperparameters for RandomForestRegressor() is sought out: 
+
+![](images/randomforest/hyperparameters.png)
+
+Key hyper-parameters were sought to be optimised, through iterative model fits - and assessing discrimination (gini ie. normalised area under ROC). The models are fit on a random 25% sample and fit on the remaining 75%. This is due to the large number of runs  required, at 2+ minutes per run, is untenable. 
+
+This approach is a little unorthodox, but necessary given run time restraints - and key principles of validating statistical models are not violated: 
+- Models are not assessed on the data they are fitted on 
+- Models are assessed on data (remaining 75%) that is wholly independent of final test data, removing the risk of overfitting through iterative runs 
+
+A little more leniency on methodology is available for random forests, as the trees train independently, and are highly resilient to overfitting. 
+
+```python
+X_train_small, X_test_small, Y_train_small, Y_test_small = train_test_split(X_train, Y_train, test_size=0.75,
+                                                    random_state=7,stratify = Y_train)
+```
+
+The following 4 hyper-parameters were optimised initially. They were done one by 
+one, rather than as a grid search, to minimise runs by several orders of magnitude.
+- Number of trees 
+- Max Features Method 
+- Bootstrapping (Yes/No) 
+- Maximum levels in tree 
+
+```python
+import matplotlib.pyplot as plt
+ginis = []
+n_trees = []
+
+for i in [1,5,25,50,500,1000,1500,2000]:
+    rf  = RandomForestRegressor(n_estimators = i, random_state = 7)
+    rf.fit(X_train_small,Y_train_small)
+    
+    predictions = rf.predict(X_test_small)
+    gini = (2*metrics.roc_auc_score(Y_test_small,predictions)-1)*100
+    
+    ginis.append(gini)
+    n_trees.append(i)
+
+    
+ 
+plt.plot(n_trees, ginis, c='b', label='Gini (on testing data)')
+plt.ylim(0,100)
+plt.ylabel('Gini/ Normalised AUC')
+plt.xlabel('Number of Trees')
+plt.legend()
+plt.show()   
+```
+
+![](images/randomforest/gini_testing_data.png)
+
+
+```python
+ginis = []
+max_features = []
+
+# Use 'sqrt' for both 'auto' and 'sqrt' since 'auto' is deprecated
+for i in ['auto', 'sqrt']:
+    if i == 'auto':
+        max_feat = 'sqrt'  # 'auto' is equivalent to 'sqrt'
+    else:
+        max_feat = i
+    
+    rf = RandomForestRegressor(n_estimators=2000, max_features=max_feat, random_state=7)
+    rf.fit(X_train_small, Y_train_small)
+    
+    predictions = rf.predict(X_test_small)
+    auc = metrics.roc_auc_score(Y_test_small, predictions)
+    gini = (2 * auc - 1) * 100
+    
+    ginis.append(gini)
+    max_features.append(i)
+
+# Plot Gini scores
+plt.bar(max_features, ginis, label='Gini (on testing data)', color='royalblue')
+plt.ylim(0, 100)
+plt.ylabel('Gini / Normalised AUC')
+plt.xlabel('Max Features Method')
+plt.title('Gini Comparison for Different Max Features Methods')
+plt.legend()
+plt.grid(True, linestyle='--', alpha=0.7)
+plt.show()
+```
+
+![](images/randomforest/gini_comparison.png)
+
+
+```python
+ginis = []
+bootstrap_labels = []
+
+for i in [True, False]:
+    # Use 'sqrt' for 'auto' because 'auto' is deprecated
+    rf = RandomForestRegressor(
+        n_estimators=2000,
+        max_features='sqrt',  # 'auto' = 'sqrt' for Regressor
+        random_state=7,
+        bootstrap=i
+    )
+    
+    rf.fit(X_train_small, Y_train_small)
+    
+    predictions = rf.predict(X_test_small)
+    auc = metrics.roc_auc_score(Y_test_small, predictions)
+    gini = (2 * auc - 1) * 100
+    
+    ginis.append(gini)
+    bootstrap_labels.append('True' if i else 'False')
+
+# Plot Gini results
+plt.figure(figsize=(6, 4))
+plt.bar(
+    bootstrap_labels, 
+    ginis, 
+    color='royalblue', 
+    width=0.6, 
+    edgecolor='black', 
+    alpha=0.85,
+    label='Gini (on testing data)'
+)
+plt.ylim(0, 100)
+plt.ylabel('Gini / Normalised AUC', fontsize=10)
+plt.xlabel('Bootstrapping', fontsize=10)
+plt.title('Gini Score by Bootstrapping Option', fontsize=12)
+plt.grid(True, linestyle='--', alpha=0.7)
+plt.legend(fontsize=8)
+plt.xticks(fontsize=9)
+plt.yticks(fontsize=9)
+plt.show()
+```
+
+![](images/randomforest/gini_score_bootstrapping.png)
+
+
+```python
+import matplotlib.pyplot as plt
+ginis = []
+max_depth = []
+
+for i in [1, 5, 15, 30, None]:
+    # Use 'sqrt' for 'auto' to avoid InvalidParameterError
+    rf = RandomForestRegressor(
+        n_estimators=2000,
+        max_features='sqrt',  # 'auto' = 'sqrt' in Regressor
+        random_state=7,
+        bootstrap=True,
+        max_depth=i
+    )
+    
+    rf.fit(X_train_small, Y_train_small)
+    
+    predictions = rf.predict(X_test_small)
+    gini = (2 * metrics.roc_auc_score(Y_test_small, predictions) - 1) * 100
+    
+    ginis.append(gini)
+    max_depth.append(str(i) if i is not None else "None")
+
+# Plot Gini results
+plt.bar(max_depth, ginis, label='Gini (on testing data)', color='royalblue')
+plt.ylim(0, 100)
+plt.ylabel('Gini / Normalised AUC')
+plt.xlabel('Maximum number of levels in Tree')
+plt.title('Gini Score by Tree Depth')
+plt.legend()
+plt.grid(True, linestyle='--', alpha=0.7)
+plt.show()
+```
+
+![](images/randomforest/gini_score_tree_depth.png)
+
+
+### Interpretation & Discussion
+
+Number of trees was highly influential. Low number of trees (i.e. 1) start with out-of-training sample gini of < 50%. The gini improves rapidly as number of trees , although the rate at which improvement in discrimination is seen greatly diminishes at around 100. The Gini does improve continuously however, and without significant runtime constraints a value of 2000 can be selected. 
+
+In a BAU environment, once the model is trained, predicting on new data is not particularly time consuming (c. 10 seconds) - so the marginal improvement in discrimination is theoretically still valuable. 
+
+Max features was not found to be incredibly influential - despite literature and stack overflow speculation. It is worth mentioning that only two methods were tested - auto and square root. Auto, which was marginally better, is selected. 
+
+Bootstrapping came with enormous performance benefits vs. not - presumably this is partially due to the small test data sample, and data scarcity issues that would deliver without bootstrapping. Bootstrapping is included, 
+
+Number of levels in Tree was pretty similar for 5+ - but ran into performance issues below 5. 5 is used in the final model, but testing does not indicate this is a super important parameter for most sensible values - as long as it is not very small. 
+
+
+### Results
+
+A final model was built using the **entire training dataset** with the selected hyperparameters. The model was then **fully evaluated on the training dataset** to assess its performance under the optimised settings.  
+
+This approach ensures that the model leverages the full training data for maximum learning capacity while using carefully selected parameters to maintain efficiency and generalisation ability.
+
+```python
+rf_final  = RandomForestRegressor(n_estimators = 2000,max_features='sqrt', random_state = 7,bootstrap = True,max_depth=5)
+
+rf_final.fit(X_train_small,Y_train_small)
+    
+predictions = rf_final.predict(X_test)
+
+accuracy = evaluate(rf_final,X_test,Y_test)
+```
+
+![](images/randomforest/final_model_performance.png)
+
+In summary tuning the hyperparameters has offered an underwhelming benefit in some areas - with offsetting tradeoffs in others. 
+- Accuracy has increased 1% to 92%. 
+- AUROC (i.e. discrimination) has decreased 1%, from 95% to 94% 
+- precision has improved 3% for succesfull sales 
+- recall has deteriorated 2% 
+- f1-score is unchanged 
+
+On the bright side, the model performs relatively well both before and after the tune. 
+Discrimination - perhaps the best measure of binary classification suitability on unbalanced 
+data, remains high - with a AUC of 94% (normalised equivalent of 88%). Accurarcy is also 
+relatively high at the somewhat arbitrary, but intuitive cutoff of 50%. 
+
+Both Recall and precision are particularly high for class 0 - i.e. failed subscriptions. This is 
+useful from a business perspective, as it can be used to eliminate calls that are unlikely to 
+succeed - reducing operational costs.
+
+```python
+from sklearn.metrics import confusion_matrix
+
+
+predictions = rf_final.predict(X_test)
+predictions_discrete = np.where(predictions > 0.5,1,0)
+
+test = confusion_matrix(predictions_discrete,Y_test)
+
+rnd = np.round(test).astype(int)
+
+ax=sns.heatmap(test, annot=True,fmt='.0f',cmap="Purples")
+ax.set(xlabel='True Outcome',ylabel='Predicted Outcome')
+plt.show
+```
+![](images/randomforest/final_model_heatmap.png)
+
+The model struggles with success recall, and produces a relatively high proportion of False Negatives. However these accuracy metrics are assessed at an arbitrary cutoff of 50%. The rate of False Positives/False negatives would be altered in inverse proportions by picking another cutoff - as such the gini, which is independent of any defined probability cutoff, is considered a better metric.
+
+
+Finally feature importance is computed - to better inform:
+
+![](images/randomforest/feature_importance.png)
+
+A relatively small number of variables drive much of the predictive power - predominantly duration, employment, 3 month euribor and days. 
+ 
+We can see successes tend to happen at lower Euribor and higher durations - both in predicted and actual outcomes: 
+
+```python
+plot_no = X_test_copy.copy()
+plot_no = plot_no[Y_test==0]
+
+plot_yes = X_test_copy.copy()
+plot_yes = plot_yes[Y_test==1]
+
+# Adjust figure size (wider and shorter for better aspect ratio)
+fig, axes = plt.subplots(2, 2, figsize=(10, 6))
+
+axes[0,0].set_title("Actual Marketing Failure")
+sns.kdeplot(ax=axes[0,0], x=plot_no['duration'], y=plot_no['euribor3m'], cmap='Reds', shade=True)
+
+axes[1,0].set_title("Actual Marketing Success")
+sns.kdeplot(ax=axes[1,0], x=plot_yes['duration'], y=plot_yes['euribor3m'], cmap='Greens', shade=True)
+
+axes[0,1].set_title("Predicted Marketing Failure")
+sns.kdeplot(ax=axes[0,1], x=plot_no['duration'], y=plot_no['euribor3m'], cmap='Reds', shade=True)
+
+axes[1,1].set_title("Predicted Marketing Success")
+sns.kdeplot(ax=axes[1,1], x=plot_yes['duration'], y=plot_yes['euribor3m'], cmap='Greens', shade=True)
+
+plt.tight_layout()
+plt.show()
+```
+
+![](images/randomforest/actual_predicted_marketing.png)
+
+
+
 ## Model 4: Support Vector Machine
 
 <b>Analysed by: Fiona Shen</b>
