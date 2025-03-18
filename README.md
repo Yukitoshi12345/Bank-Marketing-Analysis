@@ -122,129 +122,10 @@ The dataset has an **11.26% positive class rate**, highlighting the importance o
 - **Strength:** Balances false positives and false negatives, suitable for imbalanced datasets.
 - **Limitation:** Provides a single score, masking individual performance aspects.
 
-## Model 2: Gradient Boosting Machine (GBM)
+## Model 1: AdaBoostClassifier
+<b>Analysed by: Yukitoshi Imaizumi Zhou</b>
 
-Gradient boosting is an approach where new decision trees are created that predict the residuals or errors of prior models and then combined to the final model. It is called gradient boosting because the models are fitted using any arbitrary differentiable loss function and uses a gradient descent algorithm to minimize the loss when adding new models.
-
-### Justification of model choice
-
-- GBM can work for classification problems, in our context it can be used to predict if a client will subscribe to term deposit or not.
-- GBM can handle linear and non-linear relationship
-- Our dataset has a mix of numerical and categorical variables, XGBM can work well with both data types (after one hot encoded the categorical variable).
-- It doesn’t require much assumption about the dataset and/or pre-processing
-
-### Pre-processing performed
-
-GBM doesn’t natively support categorical variables, one-hot encoding is performed for categorical variables, with code shown below.
-
-```python
-#Creating Dummies for categorical variables
-X_train = pd.get_dummies(X_train)
-X_test = pd.get_dummies(X_test)
-```
-
-### Library Used
-
-```python
-#library
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-%matplotlib inline
-
-import time
-from sklearn.ensemble import GradientBoostingClassifier
-from sklearn.model_selection import GridSearchCV
-from sklearn.model_selection import cross_val_score
-from sklearn.metrics import precision_recall_fscore_support
-from sklearn.metrics import roc_curve
-from sklearn.metrics import auc
-
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
-from sklearn.metrics import classification_report
-from sklearn.metrics import accuracy_score
-from sklearn.metrics import precision_score, recall_score
-```
-
-### Hyperparameter Tuning
-
-This is critical for GBM to prevent over-fitting. Given the size of the dataset, the computational cost to grid search on all parameters is large and time consuming. To overcome this, we have only performed grid search on key parameters, used fix parameters for other parameters and also used only 3-fold cross validation.
-
-Below is a list of parameters used with justification on parameter choice:
-
-- **learning_rate**: It controls how much information from a new tree will be used in the boosting. Value usually ranges between 0 to 1, small values may need more trees to converge however could reduce risks of over-fitting. Thus, we’ve selected a small value of 0.05 and use grid search to find the best ‘n_estimators’ and ‘max_depth’ that correspond to this learning rate.
-
-- **N_estimators**: It controls the maximum number of iterations. We have grid searched on 50, 100 and 200, to find the best parameter.
-
-- **Max_depth**: Controls the maximum depth of the trees. The default value is 6, we have tuned it on small values of 1, 3 and 5 to lower risk of over-fitting.
-
-Code used for hyper parameter tuning is shown below:
-
-```python
-n_estimators = [25,50,75,100,200]
-max_depth = [1,3,5]
-
-param_grid = {'n_estimators': list(n_estimators),
-              'max_depth': list(max_depth)
-              }
-print("Parameter grid:\n{}".format(param_grid))
-
-#Setup Grid Search
-grid_search = GridSearchCV(GradientBoostingClassifier(random_state=1,learning_rate = 0.05)
-,verbose = 2, param_grid = param_grid, cv=3, return_train_score=True)
-grid_search.fit(X_train, Y_train)
-```
-
-Figure below shows the result of grid search. Evident by the chart, ‘max_depth’ of 5 and ‘n_estimators’ of 75 gives the best average score in the testing set of the cross-validation process, thus selected to fit the final model.
-
-![](images/gradientboost/GradientBoostingImage.png)
-
-### Final Model
-
-After selecting the parameter, a final model is fitted on all training dataset and results are assessed using the independent testing data.
-
-The top 10 important feature with its importance score produced by the final model is shown in figure below:
-
-![](images/gradientboost/FinalModel_GradientBoosting.png)
-
-Code used to fit the final model as below:
-
-```python
-# Predicting the Training set results
-y_predgb = classifiergb.predict(X_train)
-y_predgb_score = classifiergb.predict_proba(X_train)
-```
-
-```python
-d = {'name':classifiergb.feature_names_in_,'importance_score':classifiergb.feature_importances_}
-importance_feature = pd.DataFrame(d).sort_values(by = "importance_score", ascending = False)
-importance_feature_top = importance_feature[0:10].sort_values(by = "importance_score", ascending = True)
-plt.title("Top 10 important feature \n - Gradient Boost Machine", fontsize=18)
-plt.barh(importance_feature_top.name,importance_feature_top.importance_score)
-```
-
-### Model Evaluation
-
-Our business problem is to term deposit subscription, as such we will focus on positive class for performance evaluation. Performance results are summarised in the table below, note that Recall, Precision and F1 in the table is based on 50% probability threshold for positive class.
-
-| **Metric**    | **Training** | **Testing** |
-| ------------- | ------------ | ----------- |
-| **Accuracy**  | 92.38%       | 90.60%      |
-| **Recall**    | 62.61%       | 55.44%      |
-| **Precision** | 73.27%       | 65.14%      |
-| **F1 Score**  | 67.52%       | 59.90%      |
-| **AUROC**     | 95.73%       | 94.51%      |
-
-- There is no significant drop in performance between training and testing data indicating the model is not overfitted. This is also demonstrated in the hyper parameter tuning process where the parameter is chosen to prevent over-fitting.
-- We can see the model has high accuracy of 92% this is higher than accuracy can be achieved if predict everything to negative. This means the model has successfully identified a good amount of correct positive and negative classes.
-- The precision score for the positive class (Subscribed) is 65%, this means 65% of the predicted positive cases subscribed to the term deposits. The perfect precision score is 100%, 65% is a good performance.
-- The recall score for positive class is 55%, it means 55% of clients that will subscribe to a term deposit are picked by the model. This is a good performance, considering only 12% of clients in the dataset subscribed to term deposits. The model works better than randomly selecting a client to target.
-- Both recall and precision score are good for class 1 (subscribed), as expected the F1 score which is the harmonic mean of both recall and precision also gives good performance.
-- Area Under the Receiver Operating Characteristics (AUROC) is a probability curve that plots the True Positive Rate against the False Positive Rate is also assessed. It is one of the most important metrics to measure the ability of a classifier to distinguish between classes, which ranges from 0.5 to 1. An AUROC of 0.945 indicating the model is excellent at distinguishing between clients that will subscribe or not.
-
-A more detailed classification report and confusion matrix is shown in the figure below:
-
-## Model 3: AdaBoostClassifier
+<b>Student ID: 470445952</b>
 
 AdaBoostClassifier (Adaptive Boosting Classifier) is an ensemble learning algorithm that combines multiple weak classifiers to form a strong predictive model. It works by iteratively training weak learners, adjusting their weights to focus on misclassified instances, and combining their predictions to improve overall accuracy. Unlike traditional models that treat all samples equally, AdaBoostClassifier assigns higher importance to difficult-to-classify examples, allowing it to refine decision boundaries over multiple iterations. By leveraging weak learners such as decision stumps (single-level decision trees), AdaBoostClassifier enhances classification performance while maintaining computational efficiency.
 
@@ -547,7 +428,199 @@ While there is a minor drop in performance from the train set to the test set, t
 
 The final model generalises well to unseen data, as the test performance remains close to the training performance. The slight decrease in precision and recall suggests that while the model performs well, there is still room for improvement in identifying actual subscribers. However, the high ROC-AUC scores (0.9444 for train, 0.9378 for test) indicate that the model maintains strong overall classification ability. The results suggest that the final AdaBoostClassifier model is effective in predicting customer subscriptions without significant overfitting.
 
+
+## Model 2: Gradient Boosting Machine (GBM)
+<b>Analysed by: Chonhyangzi Teng</b>
+
+<b>Student ID: 312044712</b>
+
+Gradient boosting is an approach where new decision trees are created that predict the residuals or errors of prior models and then combined to the final model. It is called gradient boosting because the models are fitted using any arbitrary differentiable loss function and uses a gradient descent algorithm to minimize the loss when adding new models.
+
+### Justification of model choice
+
+- GBM can work for classification problems, in our context it can be used to predict if a client will subscribe to term deposit or not.
+- GBM can handle linear and non-linear relationship
+- Our dataset has a mix of numerical and categorical variables, XGBM can work well with both data types (after one hot encoded the categorical variable).
+- It doesn’t require much assumption about the dataset and/or pre-processing
+
+### Pre-processing performed
+
+GBM doesn’t natively support categorical variables, one-hot encoding is performed for categorical variables, with code shown below.
+
+```python
+#Creating Dummies for categorical variables
+X_train = pd.get_dummies(X_train)
+X_test = pd.get_dummies(X_test)
+```
+
+### Library Used
+
+```python
+#library
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+%matplotlib inline
+
+import time
+from sklearn.ensemble import GradientBoostingClassifier
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import cross_val_score
+from sklearn.metrics import precision_recall_fscore_support
+from sklearn.metrics import roc_curve
+from sklearn.metrics import auc
+
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay
+from sklearn.metrics import classification_report
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import precision_score, recall_score
+```
+
+### Hyperparameter Tuning
+
+This is critical for GBM to prevent over-fitting. Given the size of the dataset, the computational cost to grid search on all parameters is large and time consuming. To overcome this, we have only performed grid search on key parameters, used fix parameters for other parameters and also used only 3-fold cross validation.
+
+Below is a list of parameters used with justification on parameter choice:
+
+- **learning_rate**: It controls how much information from a new tree will be used in the boosting. Value usually ranges between 0 to 1, small values may need more trees to converge however could reduce risks of over-fitting. Thus, we’ve selected a small value of 0.05 and use grid search to find the best ‘n_estimators’ and ‘max_depth’ that correspond to this learning rate.
+
+- **N_estimators**: It controls the maximum number of iterations. We have grid searched on 50, 100 and 200, to find the best parameter.
+
+- **Max_depth**: Controls the maximum depth of the trees. The default value is 6, we have tuned it on small values of 1, 3 and 5 to lower risk of over-fitting.
+
+Code used for hyper parameter tuning is shown below:
+
+```python
+n_estimators = [25,50,75,100,200]
+max_depth = [1,3,5]
+
+param_grid = {'n_estimators': list(n_estimators),
+              'max_depth': list(max_depth)
+              }
+print("Parameter grid:\n{}".format(param_grid))
+
+#Setup Grid Search
+grid_search = GridSearchCV(GradientBoostingClassifier(random_state=1,learning_rate = 0.05)
+,verbose = 2, param_grid = param_grid, cv=3, return_train_score=True)
+grid_search.fit(X_train, Y_train)
+```
+
+Figure below shows the result of grid search. Evident by the chart, ‘max_depth’ of 5 and ‘n_estimators’ of 75 gives the best average score in the testing set of the cross-validation process, thus selected to fit the final model.
+
+![](images/gradientboost/GradientBoostingImage.png)
+
+### Final Model
+
+After selecting the parameter, a final model is fitted on all training dataset and results are assessed using the independent testing data.
+
+The top 10 important feature with its importance score produced by the final model is shown in figure below:
+
+![](images/gradientboost/FinalModel_GradientBoosting.png)
+
+Code used to fit the final model as below:
+
+```python
+# Predicting the Training set results
+y_predgb = classifiergb.predict(X_train)
+y_predgb_score = classifiergb.predict_proba(X_train)
+```
+
+```python
+d = {'name':classifiergb.feature_names_in_,'importance_score':classifiergb.feature_importances_}
+importance_feature = pd.DataFrame(d).sort_values(by = "importance_score", ascending = False)
+importance_feature_top = importance_feature[0:10].sort_values(by = "importance_score", ascending = True)
+plt.title("Top 10 important feature \n - Gradient Boost Machine", fontsize=18)
+plt.barh(importance_feature_top.name,importance_feature_top.importance_score)
+```
+
+### Model Evaluation
+
+Our business problem is to term deposit subscription, as such we will focus on positive class for performance evaluation. Performance results are summarised in the table below, note that Recall, Precision and F1 in the table is based on 50% probability threshold for positive class.
+
+| **Metric**    | **Training** | **Testing** |
+| ------------- | ------------ | ----------- |
+| **Accuracy**  | 92.38%       | 90.60%      |
+| **Recall**    | 62.61%       | 55.44%      |
+| **Precision** | 73.27%       | 65.14%      |
+| **F1 Score**  | 67.52%       | 59.90%      |
+| **AUROC**     | 95.73%       | 94.51%      |
+
+- There is no significant drop in performance between training and testing data indicating the model is not overfitted. This is also demonstrated in the hyper parameter tuning process where the parameter is chosen to prevent over-fitting.
+- We can see the model has high accuracy of 92% this is higher than accuracy can be achieved if predict everything to negative. This means the model has successfully identified a good amount of correct positive and negative classes.
+- The precision score for the positive class (Subscribed) is 65%, this means 65% of the predicted positive cases subscribed to the term deposits. The perfect precision score is 100%, 65% is a good performance.
+- The recall score for positive class is 55%, it means 55% of clients that will subscribe to a term deposit are picked by the model. This is a good performance, considering only 12% of clients in the dataset subscribed to term deposits. The model works better than randomly selecting a client to target.
+- Both recall and precision score are good for class 1 (subscribed), as expected the F1 score which is the harmonic mean of both recall and precision also gives good performance.
+- Area Under the Receiver Operating Characteristics (AUROC) is a probability curve that plots the True Positive Rate against the False Positive Rate is also assessed. It is one of the most important metrics to measure the ability of a classifier to distinguish between classes, which ranges from 0.5 to 1. An AUROC of 0.945 indicating the model is excellent at distinguishing between clients that will subscribe or not.
+
+A more detailed classification report and confusion matrix is shown in the figure below:
+
+![](images/gradientboost/final_model_performance.png)
+
+![](images/gradientboost/confusion_matrix_final.png)
+
+Code used to produce the evaluation metric is shown below:
+
+```python
+# Predicting the Training set results
+y_predgb = classifiergb.predict(X_train)
+y_predgb_score = classifiergb.predict_proba(X_train)
+
+#Confusion Matrix
+print('Test Output:')
+print('Confusion Matrix:')
+cm = confusion_matrix(y_train, y_predgb)
+print(cm)
+disp = ConfusionMatrixDisplay(confusion_matrix=cm,
+                              display_labels=classifiergb.classes_)
+disp.plot()
+print('Classification Report:')
+print(classification_report(y_train, y_predgb))
+print('Accuracy: ',accuracy_score(y_train,y_predgb))
+
+print('Precision Score: ', precision_score(y_train, y_predgb))
+print('Recall Score: ', recall_score(y_train, y_predgb))
+print(precision_recall_fscore_support(y_train, y_predgb))
+
+# Gradient Boosting Classifier
+grd_fpr, grd_tpr, thresold = roc_curve(y_train, y_predgb_score[:,1])
+print("AUC for training data is",auc(grd_fpr, grd_tpr))
+```
+
+```python
+# Predicting the Test set results
+y_predgb = classifiergb.predict(X_test)
+y_predgb_score = classifiergb.predict_proba(X_test)
+
+#Confusion Matrix
+print('Test Output:')
+print('Confusion Matrix:')
+cm = confusion_matrix(y_test, y_predgb)
+print(cm)
+disp = ConfusionMatrixDisplay(confusion_matrix=cm,
+                              display_labels=classifiergb.classes_)
+disp.plot()
+print('Classification Report:')
+print(classification_report(y_test, y_predgb))
+print('Accuracy: ',accuracy_score(y_test,y_predgb))
+
+print('Precision Score: ', precision_score(y_test, y_predgb))
+print('Recall Score: ', recall_score(y_test, y_predgb))
+print(precision_recall_fscore_support(y_test, y_predgb))
+```
+
+![](images/gradientboost/AUC_GradientBoost.png)
+
+
+## Model 3: Random Forest
+<b>Analysed by: Thomas Ilchef</b>
+
+<b>Student ID: 440243151</b>
+
 ## Model 4: Support Vector Machine
+<b>Analysed by: Fiona Shen</b>
+
+<b>Student ID: 312045468</b>
+
 
 ## Model Comparison
 
@@ -556,7 +629,7 @@ The table below summarises the performance of the different classification model
 | **Model**                  | **Accuracy** | **Recall** | **Precision** | **F1 Score** | **AUROC** |
 | -------------------------- | ------------ | ---------- | ------------- | ------------ | --------- |
 | **AdaBoost Classifier**    | 89.80%       | 40.80%     | 65.62%        | 50.32%       | 93.78%    |
-| **GBM**                    | 90.60%          | 55.44%        | 65.14%           | 59.90%          | 94.52%     |
+| **GBM**                    | 90.60%       | 55.44%     | 65.14%        | 59.90%       | 94.52%    |
 | **Random Forest**          | 92%          | 51%        | 67%           | 58%          | 94.2%     |
 | **Support Vector Machine** | 91%          | 38%        | 65%           | 49%          | 67.6%     |
 
